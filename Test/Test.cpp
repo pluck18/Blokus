@@ -161,7 +161,7 @@ const suite AvailableMovements_suite = [] {
             const auto board = CreateEmptyBoard();
             when("When getting available movements") = [&board] {
                 const auto moves = GetAvailableMoves(board, PlayerColor::Red, std::vector< PieceId >(nbPieces));
-                then("Then the total number of pieces times the number of orientations") = [&moves] {
+                then("Then the total number of moves is the number of pieces times the number of orientations") = [&moves] {
                     expect( that % moves.size() == 168);
                 };
             };
