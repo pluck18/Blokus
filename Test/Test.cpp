@@ -255,17 +255,17 @@ public:
     input_type const& get_input() const { return input; }
     reference_type const& get_reference() const { return reference; }
 
-    template<std::size_t Index>
-    std::tuple_element_t<Index, Data>& get()
-    {
-        if constexpr (Index == 0) return input;
-        if constexpr (Index == 1) return reference;
-    }
-
 private:
     input_type input;
     reference_type reference;
 };
+
+template<std::size_t Index, class Input, class Reference>
+std::tuple_element_t<Index, Data<Input, Reference> const>& get(Data<Input, Reference> const& data)
+{
+    if constexpr (Index == 0) return data.get_input();
+    if constexpr (Index == 1) return data.get_reference();
+}
 
 template<class Input, class Reference>
 using DataSet = std::vector<Data<Input, Reference>>;
@@ -317,14 +317,14 @@ using namespace boost::ut::bdd;
 "get_piece_corners"_test = [] {
 
     given("Given a piece") = [](test::Data<Piece, std::vector<Corner>> const& data) {
-        //auto const& [piece, reference] = data;
+        auto const& [piece, reference] = data;
 
-        when("When getting piece's corners") = [&data] {
-            auto const result = get_piece_corners(data.get_input());
+        when("When getting piece's corners") = [&piece, &reference] {
+            auto const result = get_piece_corners(piece);
 
-            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &data] {
+            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &reference] {
                 auto const sorted_result = sort(result);
-                auto const sorted_reference = sort(data.get_reference());
+                auto const sorted_reference = sort(reference);
 
                 expect(that % sorted_result == sorted_reference);
 
