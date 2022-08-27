@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets">
+    <Import Project="ExternalDependencies.props" Condition=" '$(ExternalDependenciesPropsImported)' == '' " />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <RangeV3PropsImported>true</RangeV3PropsImported>
+    <RangeV3Dir>$(ExternalDependenciesDir)\range-v3</RangeV3Dir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(RangeV3Dir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="RangeV3Dir">
+      <Value>$(RangeV3Dir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

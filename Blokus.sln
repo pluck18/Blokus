@@ -10,8 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Props", "Props", "{5E95DB3A
 		Props\Bin.props = Props\Bin.props
 		Props\Common.props = Props\Common.props
 		Props\Dll.props = Props\Dll.props
-		Props\Lib.props = Props\Lib.props
 		Props\ExternalDependencies.props = Props\ExternalDependencies.props
+		Props\Lib.props = Props\Lib.props
 		Props\Test.props = Props\Test.props
 	EndProjectSection
 EndProject
@@ -22,6 +22,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExternalDependencies", "ExternalDependencies", "{CCCE371E-02E8-40C7-8FCB-3C286F458754}"
 	ProjectSection(SolutionItems) = preProject
 		Props\ExternalDependencies\MagicEnum.props = Props\ExternalDependencies\MagicEnum.props
+		Props\ExternalDependencies\RangeV3.props = Props\ExternalDependencies\RangeV3.props
 		Props\ExternalDependencies\Ut.props = Props\ExternalDependencies\Ut.props
 	EndProjectSection
 EndProject
