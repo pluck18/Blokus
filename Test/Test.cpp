@@ -255,6 +255,13 @@ public:
     input_type const& get_input() const { return input; }
     reference_type const& get_reference() const { return reference; }
 
+    template<std::size_t Index>
+    std::tuple_element_t<Index, Data>& get()
+    {
+        if constexpr (Index == 0) return input;
+        if constexpr (Index == 1) return reference;
+    }
+
 private:
     input_type input;
     reference_type reference;
@@ -309,21 +316,21 @@ using namespace boost::ut::bdd;
 
 "get_piece_corners"_test = [] {
 
-    given("Given a piece") = [](std::pair<Piece, std::vector<Corner>> const& data) {
-        auto const& [piece, reference] = data;
+    given("Given a piece") = [](test::Data<Piece, std::vector<Corner>> const& data) {
+        //auto const& [piece, reference] = data;
 
-        when("When getting piece's corners") = [&piece, &reference] {
-            auto const result = get_piece_corners(piece);
+        when("When getting piece's corners") = [&data] {
+            auto const result = get_piece_corners(data.get_input());
 
-            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &reference] {
+            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &data] {
                 auto const sorted_result = sort(result);
-                auto const sorted_reference = sort(reference);
+                auto const sorted_reference = sort(data.get_reference());
 
                 expect(that % sorted_result == sorted_reference);
 
             };
         };
-    } | std::vector<std::pair<Piece, std::vector<Corner>>>({
+    } | std::vector<test::Data<Piece, std::vector<Corner>>>({
         { { { { 0,0 } } },        { {{0, 0}, CornerId::NW}, {{0, 0}, CornerId::NE}, {{0, 0}, CornerId::SE}, {{0, 0}, CornerId::SW} } },
         { { { { 0,0 }, {1,0} } }, { {{0, 0}, CornerId::NW}, {{1, 0}, CornerId::NE}, {{1, 0}, CornerId::SE}, {{0, 0}, CornerId::SW} } },
         });
