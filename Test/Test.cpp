@@ -161,14 +161,13 @@ bool are_equivalent(const Corner& lhs, const Corner& rhs) {
 template<class Rng>
 bool is_unique(const Corner& cornerToValidate, Rng&& corners) {
     return ranges::none_of(std::forward<Rng>(corners), [&cornerToValidate](const Corner& corner) {
-        const bool isSame = corner == cornerToValidate;
-        return !isSame && are_equivalent(corner, cornerToValidate);
+        return are_equivalent(corner, cornerToValidate);
     });
 }
 
 template<class Rng>
 auto get_unique_corners(Rng&& corners) {
-    return corners | ranges::views::filter([&corners](const Corner& corner) { return is_unique(corner, corners); });
+    return corners | ranges::views::filter([&corners](const Corner& corner) { return is_unique(corner, corners | ranges::views::remove(corner)); });
 }
 
 std::vector< Corner > compute_piece_corner(const Piece& piece) {
@@ -212,7 +211,10 @@ void test_get_piece_corner() {
     assert(sort(compute_piece_corner({ { {0,0}, {1,0} } })) == sort(std::vector< Corner >({ {{0, 0}, CornerId::NW}, {{1, 0}, CornerId::NE}, {{1, 0}, CornerId::SE}, {{0, 0}, CornerId::SW} })));
 }
 
+// ----------------------------------------------------------------------------
+
 int main() {
     test_are_equivalent();
+    test_is_unique();
     test_get_piece_corner();
 }
