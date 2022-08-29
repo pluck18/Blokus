@@ -197,7 +197,7 @@ std::vector< Corner > get_piece_corners(Piece const& piece) {
     return unique_corners | ranges::to<std::vector>();
 }
 
-std::vector<Position> get_available_place_positions(const Corner& corner, const Piece& piece) {
+std::vector<Position> get_all_place_positions(Piece const& piece, Corner const& corner) {
     // TODO
     corner;
     piece;
@@ -340,23 +340,23 @@ using namespace boost::ut::bdd;
         });
 };
 
-//"get_available_place_positions"_test = [] {
-//
-//    given("Given a corner and a piece") = [] {
-//        Corner const corner({ 0,0 }, CornerId::NW);
-//        Piece const piece({ { 0,0 }, { 1,0 } });
-//
-//        when("When getting available place positions") = [&corner, &piece] {
-//            auto const place_positions = get_available_place_positions(corner, piece);
-//
-//            then("Then the available place positions correspond to the list of the piece's opposite corners") = [&place_positions] {
-//                std::vector<Position> const reference = { {-2, 1} };
-//                expect(that% place_positions == reference);
-//
-//            };
-//        };
-//    };
-//};
+"get_all_place_positions"_test = [] {
+
+    given("Given a corner and a piece") = [] {
+        Corner const corner({ 0,0 }, CornerId::NW);
+        Piece const piece({ { 0,0 }, { 1,0 } });
+
+        when("When getting all place positions") = [&piece , &corner] {
+            auto const place_positions = get_all_place_positions(piece, corner);
+
+            then("Then getting all place positions correspond to the list of the piece's opposite corners") = [&place_positions] {
+                std::vector<Position> const reference = { {-2, 1} };
+                expect(that% place_positions == reference);
+
+            };
+        };
+    };
+};
 
 };
 
