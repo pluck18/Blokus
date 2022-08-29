@@ -179,7 +179,7 @@ bool are_equivalent(Corner const& lhs, Corner const& rhs) {
 }
 
 template<class InRng>
-bool has_equivalent(Corner const& corner_to_validate, InRng&& corners) {
+bool has_equivalence(Corner const& corner_to_validate, InRng&& corners) {
     return ranges::any_of(std::forward<InRng>(corners), [&corner_to_validate](const Corner& corner) {
         return are_equivalent(corner_to_validate, corner);
     });
@@ -187,7 +187,7 @@ bool has_equivalent(Corner const& corner_to_validate, InRng&& corners) {
 
 template<class InRng>
 auto get_unique_corners(InRng corners) {
-    return corners | ranges::views::filter([&corners](Corner const& corner) { return !has_equivalent(corner, corners | ranges::views::remove(corner)); });
+    return corners | ranges::views::filter([&corners](Corner const& corner) { return !has_equivalence(corner, corners | ranges::views::remove(corner)); });
 }
 
 std::vector< Corner > get_piece_corners(Piece const& piece) {
@@ -262,43 +262,55 @@ struct tuple_element<Index, test::Data<Input, Reference>>
 
 }
 
-void test_are_equivalent() {
-    assert(are_equivalent({ {0, 0}, CornerId::NW }, { {0, 0}, CornerId::NW }));
-
-    assert(!are_equivalent({ {0, 0}, CornerId::NW }, { {0, 0}, CornerId::NE }));
-
-    assert(are_equivalent({ {0, 0}, CornerId::NW }, { {-1,  0}, CornerId::NE }));
-    assert(are_equivalent({ {0, 0}, CornerId::NW }, { { 0,  1}, CornerId::SW }));
-    assert(are_equivalent({ {0, 0}, CornerId::NE }, { { 0,  1}, CornerId::SE }));
-    assert(are_equivalent({ {0, 0}, CornerId::NE }, { { 1,  0}, CornerId::NW }));
-    assert(are_equivalent({ {0, 0}, CornerId::SE }, { { 1,  0}, CornerId::SW }));
-    assert(are_equivalent({ {0, 0}, CornerId::SE }, { { 0, -1}, CornerId::NE }));
-    assert(are_equivalent({ {0, 0}, CornerId::SW }, { { 0, -1}, CornerId::NW }));
-    assert(are_equivalent({ {0, 0}, CornerId::SW }, { {-1,  0}, CornerId::SE }));
-
-    assert(!are_equivalent({ {0, 0}, CornerId::NW }, { {1, 0}, CornerId::SE }));
-}
-
 const boost::ut::suite rules_suite = [] {
 
 using namespace boost::ut;
 using namespace boost::ut::bdd;
 
-"has_equivalent"_test = [] {
+"are_equivalent"_test = [] {
 
-    given("Given a corner and a list") = [](test::Data<std::tuple<Corner, std::vector<Corner>>,bool> const& data) {
+    given("Given 2 corners") = [](test::Data<std::pair<Corner, Corner>, bool> const& data) {
         const auto& [input, reference] = data;
 
-        when("When validating if the corner is unique") = [&input, &reference] {
-            auto const& [corner_to_validate, corners] = input;
-            auto const result = has_equivalent(corner_to_validate, corners);
+        when("When validating if 2 corners are equivalent") = [&input, &reference] {
+            auto const& [lhs, rhs] = input;
+            auto const result = are_equivalent(lhs, rhs);
 
             then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &reference] {
                 expect(that % result == reference);
 
             };
         };
-    } | std::vector<test::Data<std::tuple<Corner, std::vector<Corner>>,bool>>({
+    } | std::vector<test::Data<std::pair<Corner, Corner>, bool>>({
+        { { { {0, 0}, CornerId::NW }, { { 0,  0}, CornerId::NW } }, true },
+        { { { {0, 0}, CornerId::NW }, { { 0,  0}, CornerId::NE } }, false },
+        { { { {0, 0}, CornerId::NW }, { {-1,  0}, CornerId::NE } }, true },
+        { { { {0, 0}, CornerId::NW }, { { 0,  1}, CornerId::SW } }, true },
+        { { { {0, 0}, CornerId::NE }, { { 0,  1}, CornerId::SE } }, true },
+        { { { {0, 0}, CornerId::NE }, { { 1,  0}, CornerId::NW } }, true },
+        { { { {0, 0}, CornerId::SE }, { { 1,  0}, CornerId::SW } }, true },
+        { { { {0, 0}, CornerId::SE }, { { 0, -1}, CornerId::NE } }, true },
+        { { { {0, 0}, CornerId::SW }, { { 0, -1}, CornerId::NW } }, true },
+        { { { {0, 0}, CornerId::SW }, { {-1,  0}, CornerId::SE } }, true },
+        { { { {0, 0}, CornerId::NW }, { { 1,  0}, CornerId::SE } }, false },
+        });
+};
+
+"has_equivalence"_test = [] {
+
+    given("Given a corner and a list") = [](test::Data<std::pair<Corner, std::vector<Corner>>,bool> const& data) {
+        const auto& [input, reference] = data;
+
+        when("When validating if the corner has an equivalence") = [&input, &reference] {
+            auto const& [corner_to_validate, corners] = input;
+            auto const result = has_equivalence(corner_to_validate, corners);
+
+            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &reference] {
+                expect(that % result == reference);
+
+            };
+        };
+    } | std::vector<test::Data<std::pair<Corner, std::vector<Corner>>,bool>>({
         { { { {0, 0}, CornerId::NW }, { { {0, 0}, CornerId::NW } } }, true },
         { { { {0, 0}, CornerId::NW }, { { {0, 1}, CornerId::SW } } }, true },
         { { { {0, 0}, CornerId::NW }, {} },                           false },
@@ -350,6 +362,4 @@ using namespace boost::ut::bdd;
 
 // ----------------------------------------------------------------------------
 
-int main() {
-    test_are_equivalent();
-}
+int main() {}
