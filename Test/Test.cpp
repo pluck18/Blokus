@@ -137,13 +137,24 @@ std::vector<Corner> create_corners(Position const& position) {
     return { {position, CornerId::NW}, {position, CornerId::NE}, {position, CornerId::SE}, {position, CornerId::SW} };
 }
 
-auto get_all_corners(const OrientedPiece& oriented_piece) {
-    const auto& squares = oriented_piece.get_squares();
+namespace ranges {
 
-    return ranges::views::join(
+auto get_all_corners(OrientedPiece const& oriented_piece) {
+    auto const& squares = oriented_piece.get_squares();
+
+    auto corners = ranges::views::join(
         squares |
         ranges::views::transform([](Position const& position) { return create_corners(position); })
     );
+
+    return corners;
+}
+
+}
+
+std::vector<Corner> get_all_corners(OrientedPiece const& oriented_piece) {
+    auto corners = ranges::get_all_corners(oriented_piece);
+    return corners | ranges::to<std::vector>();
 }
 
 bool are_equivalent(Corner const& lhs, Corner const& rhs) {
@@ -182,22 +193,37 @@ bool are_equivalent(Corner const& lhs, Corner const& rhs) {
     }
 }
 
-template<class InRng>
-bool has_equivalence(Corner const& corner_to_validate, InRng&& corners) {
-    return ranges::any_of(std::forward<InRng>(corners), [&corner_to_validate](const Corner& corner) {
+template<class Rng>
+bool has_equivalence(Corner const& corner_to_validate, Rng&& corners) {
+    return ranges::any_of(corners, [corner_to_validate](const Corner& corner) {
         return are_equivalent(corner_to_validate, corner);
-    });
+        });
 }
 
-template<class InRng>
-auto get_unique_corners(InRng corners) {
-    return corners | ranges::views::filter([&corners](Corner const& corner) { return !has_equivalence(corner, corners | ranges::views::remove(corner)); });
+namespace ranges {
+
+template<class Rng>
+auto get_unique_corners(Rng&& corners) {
+    return corners | ranges::views::filter([corners](Corner const& corner) mutable {
+        return !has_equivalence(corner, corners | ranges::views::remove(corner));
+        });
+}
+
+}
+
+namespace ranges {
+
+auto get_piece_corners(OrientedPiece const& oriented_piece) {
+    auto all_corners = ranges::get_all_corners(oriented_piece);
+    auto unique_corners = ranges::get_unique_corners(all_corners);
+
+    return unique_corners;
+}
+
 }
 
 std::vector< Corner > get_piece_corners(OrientedPiece const& oriented_piece) {
-    auto const all_corners = get_all_corners(oriented_piece);
-    auto unique_corners = get_unique_corners(all_corners);
-
+    auto unique_corners = ranges::get_piece_corners(oriented_piece);
     return unique_corners | ranges::to<std::vector>();
 }
 
@@ -223,19 +249,75 @@ PositionDelta get_displacement(Corner const& corner) {
     }
 }
 
+namespace ranges {
+
+template<class Rng>
+auto get_corresponding_corner(Rng&& corners, CornerId const& corner_id)
+{
+    auto corresponding_corners = std::forward<Rng>(corners) | ranges::views::filter([corner_id](Corner const& corner_to_validate) {
+        return corner_to_validate.get_corner_id() == corner_id;
+        });
+
+    return corresponding_corners;
+}
+
+template<class Rng>
+auto get_moves_displacement(Rng&& corners)
+{
+    auto displacements = corners | ranges::views::transform([](Corner const& corner) {
+        return get_displacement(corner);
+        });
+
+    return displacements;
+}
+
+auto get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
+    auto corners = ranges::get_piece_corners(oriented_piece);
+    auto valid_corners = ranges::get_corresponding_corner(corners, corner_id);
+    auto displacements = ranges::get_moves_displacement(valid_corners);
+
+    return displacements;
+}
+
+}
+
+std::vector<PositionDelta> get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
+    auto displacements = ranges::get_all_oriented_piece_displacement(oriented_piece, corner_id);
+    return displacements | ranges::to<std::vector>();
+}
+
+namespace ranges {
+
+template<class Rng>
+auto translate_position(Position const& position, Rng&& displacements) {
+    auto translated_position = displacements | ranges::views::transform([position](PositionDelta const& displacement) {
+        return position + displacement;
+        });
+    return translated_position;
+}
+
+}
+
+template<class Rng>
+std::vector<Position> translate_position(Position const& position, Rng&& displacements) {
+    auto translated_position = ranges::translate_position(position, displacements);
+    return translated_position | ranges::to<std::vector>();
+}
+
+namespace ranges {
+
+auto get_all_oriented_piece_moves_position(OrientedPiece const& oriented_piece, Corner const& corner) {
+    auto displacements = ranges::get_all_oriented_piece_displacement(oriented_piece, corner.get_corner_id());
+    auto moves_position = ranges::translate_position(corner.get_position(), displacements);
+
+    return moves_position;
+}
+
+}
+
 std::vector<Position> get_all_oriented_piece_moves_position(OrientedPiece const& oriented_piece, Corner const& corner) {
-    auto const corners = get_piece_corners(oriented_piece);
-
-    auto valid_corners = corners | ranges::views::filter([&corner](Corner const& corner_to_validate) {
-        return corner_to_validate.get_corner_id() == corner.get_corner_id();
-        });
-
-    auto place_positions = valid_corners | ranges::views::transform([&corner](Corner const& piece_corner) {
-        auto const displacement = get_displacement(piece_corner);
-        return corner.get_position() + displacement;
-        });
-
-    return place_positions | ranges::to<std::vector>();
+    auto moves_position = ranges::get_all_oriented_piece_moves_position(oriented_piece, corner);
+    return moves_position | ranges::to<std::vector>();
 }
 
 template<class InRng, class OutRng = std::remove_cvref_t<InRng>>
@@ -389,7 +471,10 @@ using namespace boost::ut::bdd;
             };
         };
     } | std::vector< test::Data<std::tuple<OrientedPiece, Corner>, std::vector<Position>>>({
-        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::SE } }, { { -2, 1 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::SE } }, { { -2,  1 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::SW } }, { {  1,  1 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::NW } }, { {  1, -1 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::NE } }, { { -2, -1 } } },
         });
 };
 
