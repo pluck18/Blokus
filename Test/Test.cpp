@@ -195,7 +195,7 @@ bool are_equivalent(Corner const& lhs, Corner const& rhs) {
 
 template<class Rng>
 bool has_equivalence(Corner const& corner_to_validate, Rng&& corners) {
-    return ranges::any_of(corners, [corner_to_validate](const Corner& corner) {
+    return ranges::any_of(std::forward<Rng>(corners), [&corner_to_validate](const Corner& corner) {
         return are_equivalent(corner_to_validate, corner);
         });
 }
@@ -204,8 +204,9 @@ namespace ranges {
 
 template<class Rng>
 auto get_unique_corners(Rng&& corners) {
-    return corners | ranges::views::filter([corners](Corner const& corner) mutable {
-        return !has_equivalence(corner, corners | ranges::views::remove(corner));
+    return std::forward<Rng>(corners) | ranges::views::filter([corners](Corner const& corner) mutable {
+        auto corners_copy = ranges::copy(corners);
+        return !has_equivalence(corner, corners_copy | ranges::views::remove(corner));
         });
 }
 
@@ -224,7 +225,7 @@ auto get_piece_corners(OrientedPiece const& oriented_piece) {
 
 std::vector< Corner > get_piece_corners(OrientedPiece const& oriented_piece) {
     auto unique_corners = ranges::get_piece_corners(oriented_piece);
-    return unique_corners | ranges::to<std::vector>();
+    return std::move(unique_corners) | ranges::to<std::vector>();
 }
 
 PositionDelta get_displacement(Corner const& corner) {
@@ -264,7 +265,7 @@ auto get_corresponding_corner(Rng&& corners, CornerId const& corner_id)
 template<class Rng>
 auto get_moves_displacement(Rng&& corners)
 {
-    auto displacements = corners | ranges::views::transform([](Corner const& corner) {
+    auto displacements = std::forward<Rng>(corners) | ranges::views::transform([](Corner const& corner) {
         return get_displacement(corner);
         });
 
@@ -273,8 +274,8 @@ auto get_moves_displacement(Rng&& corners)
 
 auto get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
     auto corners = ranges::get_piece_corners(oriented_piece);
-    auto valid_corners = ranges::get_corresponding_corner(corners, corner_id);
-    auto displacements = ranges::get_moves_displacement(valid_corners);
+    auto valid_corners = ranges::get_corresponding_corner(std::move(corners), corner_id);
+    auto displacements = ranges::get_moves_displacement(std::move(valid_corners));
 
     return displacements;
 }
@@ -283,14 +284,14 @@ auto get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, Co
 
 std::vector<PositionDelta> get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
     auto displacements = ranges::get_all_oriented_piece_displacement(oriented_piece, corner_id);
-    return displacements | ranges::to<std::vector>();
+    return std::move(displacements) | ranges::to<std::vector>();
 }
 
 namespace ranges {
 
 template<class Rng>
 auto translate_position(Position const& position, Rng&& displacements) {
-    auto translated_position = displacements | ranges::views::transform([position](PositionDelta const& displacement) {
+    auto translated_position = std::forward<Rng>(displacements) | ranges::views::transform([position](PositionDelta const& displacement) {
         return position + displacement;
         });
     return translated_position;
@@ -301,14 +302,14 @@ auto translate_position(Position const& position, Rng&& displacements) {
 template<class Rng>
 std::vector<Position> translate_position(Position const& position, Rng&& displacements) {
     auto translated_position = ranges::translate_position(position, displacements);
-    return translated_position | ranges::to<std::vector>();
+    return std::move(translated_position) | ranges::to<std::vector>();
 }
 
 namespace ranges {
 
 auto get_all_oriented_piece_moves_position(OrientedPiece const& oriented_piece, Corner const& corner) {
     auto displacements = ranges::get_all_oriented_piece_displacement(oriented_piece, corner.get_corner_id());
-    auto moves_position = ranges::translate_position(corner.get_position(), displacements);
+    auto moves_position = ranges::translate_position(corner.get_position(), std::move(displacements));
 
     return moves_position;
 }
@@ -317,7 +318,7 @@ auto get_all_oriented_piece_moves_position(OrientedPiece const& oriented_piece, 
 
 std::vector<Position> get_all_oriented_piece_moves_position(OrientedPiece const& oriented_piece, Corner const& corner) {
     auto moves_position = ranges::get_all_oriented_piece_moves_position(oriented_piece, corner);
-    return moves_position | ranges::to<std::vector>();
+    return std::move(moves_position) | ranges::to<std::vector>();
 }
 
 template<class InRng, class OutRng = std::remove_cvref_t<InRng>>
