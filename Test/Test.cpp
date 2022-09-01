@@ -38,14 +38,14 @@
 // SW--SE
 // So, to define a corner, we need to specify the square position and the corner on this square
 
-// Let compute the piece_corner of a specific piece
+// Let compute the piece_corner of a specific oriented_piece
 // First we need a test case, start with the single square
 // In this case, the piece_corners will be {0,0,NW}, {0,0,NE}, {0,0,SW}, and {0,0,SE}
-// The generalization would be that the piece_corners are the unique corner from all the piece squares' corners
+// The generalization would be that the piece_corners are the unique corner from all the oriented_piece squares' corners
 // For this we need to find the equivalent corner of 2 adjacent squares
 
-// The next step is to gather all the squares of a piece that can be placed at a specific corner
-// like, for the 1 square piece at (0,0), for the NW corner, the 2 squares piece can be placed at (-2,1)
+// The next step is to gather all the squares of a oriented_piece that can be placed at a specific corner
+// like, for the 1 square oriented_piece at (0,0), for the NW corner, the 2 squares oriented_piece can be placed at (-2,1)
 
 class Position {
 public:
@@ -90,6 +90,10 @@ constexpr Position operator+(Position const& position, PositionDelta const& delt
     return { position.get_x() + delta.get_x(), position.get_y() + delta.get_y() };
 }
 
+constexpr Position operator-(Position const& position, PositionDelta const& delta) {
+    return { position.get_x() - delta.get_x(), position.get_y() - delta.get_y() };
+}
+
 enum class CornerId { NW, NE, SE, SW };
 std::ostream& operator<<(std::ostream& output, CornerId const& value) {
     output << magic_enum::enum_name(value);
@@ -118,9 +122,9 @@ std::ostream& operator<<(std::ostream& output, Corner const& value) {
     return output;
 }
 
-class Piece {
+class OrientedPiece {
 public:
-    Piece(std::vector<Position> squares)
+    OrientedPiece(std::vector<Position> squares)
         : squares(std::move(squares))
     {}
 
@@ -133,8 +137,8 @@ std::vector<Corner> create_corners(Position const& position) {
     return { {position, CornerId::NW}, {position, CornerId::NE}, {position, CornerId::SE}, {position, CornerId::SW} };
 }
 
-auto get_all_corners(const Piece& piece) {
-    const auto& squares = piece.get_squares();
+auto get_all_corners(const OrientedPiece& oriented_piece) {
+    const auto& squares = oriented_piece.get_squares();
 
     return ranges::views::join(
         squares |
@@ -190,18 +194,47 @@ auto get_unique_corners(InRng corners) {
     return corners | ranges::views::filter([&corners](Corner const& corner) { return !has_equivalence(corner, corners | ranges::views::remove(corner)); });
 }
 
-std::vector< Corner > get_piece_corners(Piece const& piece) {
-    auto const all_corners = get_all_corners(piece);
+std::vector< Corner > get_piece_corners(OrientedPiece const& oriented_piece) {
+    auto const all_corners = get_all_corners(oriented_piece);
     auto unique_corners = get_unique_corners(all_corners);
 
     return unique_corners | ranges::to<std::vector>();
 }
 
-std::vector<Position> get_all_place_positions(Piece const& piece, Corner const& corner) {
-    // TODO
-    corner;
-    piece;
-    return {};
+PositionDelta get_displacement(Corner const& corner) {
+    auto const& position = corner.get_position();
+    auto const& x = position.get_x();
+    auto const& y = position.get_y();
+
+    static_assert(magic_enum::enum_count<CornerId>() == 4, "New case needs to be added here");
+    switch (corner.get_corner_id())
+    {
+    case CornerId::NW:
+        return { x, -y };
+    case CornerId::NE:
+        return { -x, -y };
+    case CornerId::SE:
+        return { -x, y };
+    case CornerId::SW:
+        return { x, y };
+    default:
+        assert(false && "Invalid CornerId");
+        return { 0, 0 };
+    }
+}
+
+std::vector<Position> get_all_oriented_piece_moves(OrientedPiece const& oriented_piece, Corner const& corner) {
+    auto const corners = get_piece_corners(oriented_piece);
+    auto valid_corners = corners | ranges::views::filter([&corner](Corner const& corner_to_validate) {
+        return corner_to_validate.get_corner_id() == corner.get_corner_id();
+        });
+
+    auto place_positions = valid_corners | ranges::views::transform([&corner](Corner const& piece_corner) {
+        auto const displacement = get_displacement(piece_corner);
+        return corner.get_position() + displacement;
+        });
+
+    return place_positions | ranges::to<std::vector>();
 }
 
 template<class InRng, class OutRng = std::remove_cvref_t<InRng>>
@@ -276,7 +309,7 @@ using namespace boost::ut::bdd;
             auto const& [lhs, rhs] = input;
             auto const result = are_equivalent(lhs, rhs);
 
-            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &reference] {
+            then("Then the oriented piece's corners are the corners that are only on 1 square of the oriented piece") = [&result, &reference] {
                 expect(that % result == reference);
 
             };
@@ -298,19 +331,19 @@ using namespace boost::ut::bdd;
 
 "has_equivalence"_test = [] {
 
-    given("Given a corner and a list") = [](test::Data<std::pair<Corner, std::vector<Corner>>,bool> const& data) {
+    given("Given a corner and a list") = [](test::Data<std::tuple<Corner, std::vector<Corner>>,bool> const& data) {
         const auto& [input, reference] = data;
 
         when("When validating if the corner has an equivalence") = [&input, &reference] {
             auto const& [corner_to_validate, corners] = input;
             auto const result = has_equivalence(corner_to_validate, corners);
 
-            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &reference] {
+            then("Then the oriented piece's corners are the corners that are only on 1 square of the oriented piece") = [&result, &reference] {
                 expect(that % result == reference);
 
             };
         };
-    } | std::vector<test::Data<std::pair<Corner, std::vector<Corner>>,bool>>({
+    } | std::vector<test::Data<std::tuple<Corner, std::vector<Corner>>,bool>>({
         { { { {0, 0}, CornerId::NW }, { { {0, 0}, CornerId::NW } } }, true },
         { { { {0, 0}, CornerId::NW }, { { {0, 1}, CornerId::SW } } }, true },
         { { { {0, 0}, CornerId::NW }, {} },                           false },
@@ -320,13 +353,13 @@ using namespace boost::ut::bdd;
 
 "get_piece_corners"_test = [] {
 
-    given("Given a piece") = [](test::Data<Piece, std::vector<Corner>> const& data) {
-        auto const& [piece, reference] = data;
+    given("Given a oriented piece") = [](test::Data<OrientedPiece, std::vector<Corner>> const& data) {
+        auto const& [oriented_piece, reference] = data;
 
-        when("When getting piece's corners") = [&piece, &reference] {
-            auto const result = get_piece_corners(piece);
+        when("When getting oriented piece's corners") = [&oriented_piece, &reference] {
+            auto const result = get_piece_corners(oriented_piece);
 
-            then("Then the piece's corners are the corners that are only on 1 square of the piece") = [&result, &reference] {
+            then("Then the oriented piece's corners are the corners that are only on 1 square of the oriented piece") = [&result, &reference] {
                 auto const sorted_result = sort(result);
                 auto const sorted_reference = sort(reference);
 
@@ -334,24 +367,24 @@ using namespace boost::ut::bdd;
 
             };
         };
-    } | std::vector<test::Data<Piece, std::vector<Corner>>>({
+    } | std::vector<test::Data<OrientedPiece, std::vector<Corner>>>({
         { { { { 0,0 } } },        { {{0, 0}, CornerId::NW}, {{0, 0}, CornerId::NE}, {{0, 0}, CornerId::SE}, {{0, 0}, CornerId::SW} } },
         { { { { 0,0 }, {1,0} } }, { {{0, 0}, CornerId::NW}, {{1, 0}, CornerId::NE}, {{1, 0}, CornerId::SE}, {{0, 0}, CornerId::SW} } },
         });
 };
 
-"get_all_place_positions"_test = [] {
+"get_all_oriented_piece_moves"_test = [] {
 
-    given("Given a corner and a piece") = [] {
-        Corner const corner({ 0,0 }, CornerId::NW);
-        Piece const piece({ { 0,0 }, { 1,0 } });
+    given("Given a corner and a oriented piece") = [] {
+        Corner const corner({-1,1},CornerId::SE);
+        OrientedPiece const oriented_piece({ { 0,0 }, { 1,0 } });
 
-        when("When getting all place positions") = [&piece , &corner] {
-            auto const place_positions = get_all_place_positions(piece, corner);
+        when("When getting all oriented piece moves") = [&oriented_piece , &corner] {
+            auto const result = get_all_oriented_piece_moves(oriented_piece, corner);
 
-            then("Then getting all place positions correspond to the list of the piece's opposite corners") = [&place_positions] {
+            then("Then getting all place positions correspond to the list of the oriented piece's opposite corners") = [&result] {
                 std::vector<Position> const reference = { {-2, 1} };
-                expect(that% place_positions == reference);
+                expect(that% result == reference);
 
             };
         };
@@ -359,6 +392,10 @@ using namespace boost::ut::bdd;
 };
 
 };
+
+// TODO: Add the real place position from the corner, like {{0,0},CornerId::NW} should give {{-1,-1},CornerId::SE}
+// Something like get_all_place_positions
+// get_all_oriented_piece_move(oriented_piece, possible_places) -> move, where a move is a placed_oriented_piece (an oriented piece with a translation applied)
 
 // ----------------------------------------------------------------------------
 
