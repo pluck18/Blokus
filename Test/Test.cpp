@@ -471,10 +471,14 @@ using namespace boost::ut::bdd;
             };
         };
     } | std::vector< test::Data<std::tuple<OrientedPiece, Corner>, std::vector<Position>>>({
-        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::SE } }, { { -2,  1 } } },
-        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::SW } }, { {  1,  1 } } },
-        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::NW } }, { {  1, -1 } } },
-        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::NE } }, { { -2, -1 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SE } }, { { -1, 0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SW } }, { {  0, 0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NW } }, { {  0, 0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NE } }, { { -1, 0 } } },
+        // TODO: Add tests on get_all_oriented_piece_displacement
+        // TODO: Add tests with pieces of 3 squares in get_all_oriented_piece_displacement
+        // TODO: Move those tests to get_all_oriented_piece_displacement, duplicate one here
+        // TODO: Add tests with a different corner position
         });
 };
 
