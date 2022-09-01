@@ -223,8 +223,9 @@ PositionDelta get_displacement(Corner const& corner) {
     }
 }
 
-std::vector<Position> get_all_oriented_piece_moves(OrientedPiece const& oriented_piece, Corner const& corner) {
+std::vector<Position> get_all_oriented_piece_moves_position(OrientedPiece const& oriented_piece, Corner const& corner) {
     auto const corners = get_piece_corners(oriented_piece);
+
     auto valid_corners = corners | ranges::views::filter([&corner](Corner const& corner_to_validate) {
         return corner_to_validate.get_corner_id() == corner.get_corner_id();
         });
@@ -373,22 +374,23 @@ using namespace boost::ut::bdd;
         });
 };
 
-"get_all_oriented_piece_moves"_test = [] {
+"get_all_oriented_piece_moves_position"_test = [] {
 
-    given("Given a corner and a oriented piece") = [] {
-        Corner const corner({-1,1},CornerId::SE);
-        OrientedPiece const oriented_piece({ { 0,0 }, { 1,0 } });
+    given("Given a corner and a oriented piece") = [](test::Data<std::tuple<OrientedPiece, Corner>, std::vector<Position>> const& data) {
+        auto const& [input, reference] = data;
 
-        when("When getting all oriented piece moves") = [&oriented_piece , &corner] {
-            auto const result = get_all_oriented_piece_moves(oriented_piece, corner);
+        when("When getting all oriented piece moves displacement") = [&input, &reference] {
+            auto const& [oriented_piece, corner] = input;
+            auto const result = get_all_oriented_piece_moves_position(oriented_piece, corner);
 
-            then("Then getting all place positions correspond to the list of the oriented piece's opposite corners") = [&result] {
-                std::vector<Position> const reference = { {-2, 1} };
+            then("Then getting all place positions correspond to the list of the oriented piece's opposite corners") = [&result, &reference] {
                 expect(that% result == reference);
 
             };
         };
-    };
+    } | std::vector< test::Data<std::tuple<OrientedPiece, Corner>, std::vector<Position>>>({
+        { { { { { 0,0 }, { 1,0 } } }, { { -1,1 }, CornerId::SE } }, { { -2, 1 } } },
+        });
 };
 
 };
