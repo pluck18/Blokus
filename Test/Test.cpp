@@ -150,7 +150,14 @@ public:
     std::vector<Position> const& get_squares() const { return squares; }
 private:
     std::vector<Position> squares;
+
+    friend auto operator<=>(OrientedPiece const&, OrientedPiece const&) = default;
 };
+
+std::ostream& operator<<(std::ostream& output, OrientedPiece const& /*value*/) {
+    // TODO: to be completed
+    return output;
+}
 
 
 class Piece {
@@ -164,10 +171,21 @@ std::ostream& operator<<(std::ostream& output, Piece const& /*value*/) {
     return output;
 }
 
+enum class PlayerId { Red, Green, Blue, Yellow };
+
+std::ostream& operator<<(std::ostream& output, PlayerId const& value) {
+    output << magic_enum::enum_name(value);
+    return output;
+}
+
 class Game {
 public:
     std::vector<Piece> get_pieces_on_board() const {
         return {};
+    }
+
+    PlayerId get_current_player() const {
+        return PlayerId::Yellow;
     }
 
 private:
@@ -419,6 +437,7 @@ using namespace boost::ut::bdd;
 "BoardState"_test = [] {
 
     given("Given a new game") = []{
+        PlayerId first_player = PlayerId::Yellow;
         Game const game;
 
         when("When getting the board state") = [&game] {
@@ -431,7 +450,20 @@ using namespace boost::ut::bdd;
 
             };
         };
+
+        when("When getting the current player") = [&game, &first_player] {
+            auto const result = game.get_current_player();
+
+            then("Then current player is the first player") = [&result, &first_player] {
+                auto const reference = first_player;
+
+                expect(that % result == reference);
+
+            };
+        };
     };
+
+    //given("Given a player move")
 };
 
 "are_equivalent"_test = [] {
