@@ -180,19 +180,43 @@ std::ostream& operator<<(std::ostream& output, PlayerId const& value) {
 
 class Game {
 public:
+    static Game CreateNew( std::vector<PlayerId> players ) {
+        return { std::move(players) };
+    }
+
     std::vector<Piece> get_pieces_on_board() const {
         return {};
     }
 
     PlayerId get_current_player() const {
-        return PlayerId::Yellow;
+        return players[current_player];
     }
 
 private:
+    Game(std::vector<PlayerId> players) : players(std::move(players)) {
+        assert(!this->players.empty());
+    }
+
+    std::vector<PlayerId> players;
+    size_t current_player{ 0 };
+
     friend auto operator<=>(Game const&, Game const&) = default;
 };
 
-std::ostream& operator<<(std::ostream& output, Game const& /*value*/) {
+template<class Type, class Alloc>
+std::ostream& operator<<(std::ostream& output, std::vector<Type, Alloc> const& values) {
+    // TODO: Replace with fmt
+    output << "[ ";
+    for (auto& value : values) {
+        output << value << ", ";
+    }
+    output << " ]";
+
+    return output;
+}
+
+std::ostream& operator<<(std::ostream& output, Game const& value) {
+    output << "{ " << "Pieces on board: " << value.get_pieces_on_board() << ", " << "Current player: " << value.get_current_player() << " }";
     return output;
 }
 
@@ -436,9 +460,9 @@ using namespace boost::ut::bdd;
 
 "BoardState"_test = [] {
 
-    given("Given a new game") = []{
+    given("Given a new game and players") = []{
         PlayerId first_player = PlayerId::Yellow;
-        Game const game;
+        auto const game = Game::CreateNew({ first_player, PlayerId::Red, PlayerId::Green, PlayerId::Blue });
 
         when("When getting the board state") = [&game] {
             auto const result = game.get_pieces_on_board();
@@ -454,7 +478,7 @@ using namespace boost::ut::bdd;
         when("When getting the current player") = [&game, &first_player] {
             auto const result = game.get_current_player();
 
-            then("Then current player is the first player") = [&result, &first_player] {
+            then("Then the current player is the first player") = [&result, &first_player] {
                 auto const reference = first_player;
 
                 expect(that % result == reference);
