@@ -44,7 +44,7 @@
 // The generalization would be that the piece_corners are the unique corner from all the oriented_piece squares' corners
 // For this we need to find the equivalent corner of 2 adjacent squares
 
-// The next step is to gather all the squares of a oriented_piece that can be placed at a specific corner
+// The next step is to gather all the squares of an oriented_piece that can be placed at a specific corner
 // like, for the 1 square oriented_piece at (0,0), for the NW corner, the 2 squares oriented_piece can be placed at (-2,1)
 
 class Position {
@@ -230,30 +230,16 @@ std::vector< Corner > get_piece_corners(OrientedPiece const& oriented_piece) {
 
 PositionDelta get_displacement(Corner const& corner) {
     auto const& position = corner.get_position();
-    auto const& x = position.get_x();
-    auto const& y = position.get_y();
+    auto x = position.get_x();
+    auto y = position.get_y();
 
-    static_assert(magic_enum::enum_count<CornerId>() == 4, "New case needs to be added here");
-    switch (corner.get_corner_id())
-    {
-    case CornerId::NW:
-        return { x, -y };
-    case CornerId::NE:
-        return { -x, -y };
-    case CornerId::SE:
-        return { -x, y };
-    case CornerId::SW:
-        return { x, y };
-    default:
-        assert(false && "Invalid CornerId");
-        return { 0, 0 };
-    }
+    return { -x, -y };
 }
 
 namespace ranges {
 
 template<class Rng>
-auto get_corresponding_corner(Rng&& corners, CornerId const& corner_id)
+auto get_corresponding_corners(Rng&& corners, CornerId const& corner_id)
 {
     auto corresponding_corners = std::forward<Rng>(corners) | ranges::views::filter([corner_id](Corner const& corner_to_validate) {
         return corner_to_validate.get_corner_id() == corner_id;
@@ -272,9 +258,9 @@ auto get_moves_displacement(Rng&& corners)
     return displacements;
 }
 
-auto get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
+auto get_all_oriented_piece_moves_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
     auto corners = ranges::get_piece_corners(oriented_piece);
-    auto valid_corners = ranges::get_corresponding_corner(std::move(corners), corner_id);
+    auto valid_corners = ranges::get_corresponding_corners(std::move(corners), corner_id);
     auto displacements = ranges::get_moves_displacement(std::move(valid_corners));
 
     return displacements;
@@ -282,8 +268,8 @@ auto get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, Co
 
 }
 
-std::vector<PositionDelta> get_all_oriented_piece_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
-    auto displacements = ranges::get_all_oriented_piece_displacement(oriented_piece, corner_id);
+std::vector<PositionDelta> get_all_oriented_piece_moves_displacement(OrientedPiece const& oriented_piece, CornerId const& corner_id) {
+    auto displacements = ranges::get_all_oriented_piece_moves_displacement(oriented_piece, corner_id);
     return std::move(displacements) | ranges::to<std::vector>();
 }
 
@@ -308,7 +294,7 @@ std::vector<Position> translate_position(Position const& position, Rng&& displac
 namespace ranges {
 
 auto get_all_oriented_piece_moves_position(OrientedPiece const& oriented_piece, Corner const& corner) {
-    auto displacements = ranges::get_all_oriented_piece_displacement(oriented_piece, corner.get_corner_id());
+    auto displacements = ranges::get_all_oriented_piece_moves_displacement(oriented_piece, corner.get_corner_id());
     auto moves_position = ranges::translate_position(corner.get_position(), std::move(displacements));
 
     return moves_position;
@@ -472,14 +458,13 @@ using namespace boost::ut::bdd;
             };
         };
     } | std::vector< test::Data<std::tuple<OrientedPiece, Corner>, std::vector<Position>>>({
-        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SE } }, { { -1, 0 } } },
-        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SW } }, { {  0, 0 } } },
-        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NW } }, { {  0, 0 } } },
-        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NE } }, { { -1, 0 } } },
-        // TODO: Add tests on get_all_oriented_piece_displacement
-        // TODO: Add tests with pieces of 3 squares in get_all_oriented_piece_displacement
-        // TODO: Move those tests to get_all_oriented_piece_displacement, duplicate one here
-        // TODO: Add tests with a different corner position
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SE } }, { { -1,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SW } }, { {  0,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NW } }, { {  0,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NE } }, { { -1,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 1, 2 }, CornerId::SE } }, { {  0,  2 } } },
+        { { { { { 1,2 }, { 2,2 } } }, { { 0, 0 }, CornerId::SE } }, { { -2, -2 } } },
+        { { { { { 0,0 }, { 0,1 }, { 1,1 } } }, { { 0, 0 }, CornerId::SE } }, { { 0, 0 }, { -1, -1 } } },
         });
 };
 
