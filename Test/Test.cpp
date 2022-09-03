@@ -47,6 +47,16 @@
 // The next step is to gather all the squares of an oriented_piece that can be placed at a specific corner
 // like, for the 1 square oriented_piece at (0,0), for the NW corner, the 2 squares oriented_piece can be placed at (-2,1)
 
+// I've skipped the big idea.
+// Let restart from the beginning.
+// What I want is to play a regular game where I can keep the state of every player moves
+// Something like the state at the beginning, the state after Player 1 move. In order to go through all the possible games,
+// I would need either a way to keep track of all the possible other moves so that all siblings can be created right away
+// or to keep only an index of the current move and recompute the list of possible moves and increment the index for the next sibling.
+// I need to keep in mind that this are volatile points.
+// My first guess would be to keep all the possible moves which would be composed of a piece, an orientation and a position.
+// This would be equivalent to 2 enums (shorts) and 2 ints which would be equivalent to 3 ints
+
 class Position {
 public:
     constexpr Position(int x, int y)
