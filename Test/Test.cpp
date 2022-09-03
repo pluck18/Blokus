@@ -55,7 +55,16 @@
 // or to keep only an index of the current move and recompute the list of possible moves and increment the index for the next sibling.
 // I need to keep in mind that this are volatile points.
 // My first guess would be to keep all the possible moves which would be composed of a piece, an orientation and a position.
-// This would be equivalent to 2 enums (shorts) and 2 ints which would be equivalent to 3 ints
+// This would be equivalent to 2 enums (shorts) and 2 ints which would be equivalent to 3 ints.
+// Re-reading it make me realize that my state database should be event sourcing style.
+// A state in this case would be the delta to the previous one probably, but this is to be memory efficient. Otherwise, we would have to 
+// keep the state as the full knowledge of all pieces
+// There is a lot of optimization here, but I should stick to keeping all states first and then optimize memory foot print
+// So, going back to the problem, what should be the first step?
+// From the initial board game state, the first step would be to find all the available moves for Player 1
+// After that it would be to store all the moves for that state, apply the move and store the new state
+// After that it would be to repeat for Player 2, then Player 3, then Player 4, and then go back to Player 1.
+// Let start with the initial state
 
 class Position {
 public:
@@ -142,6 +151,32 @@ public:
 private:
     std::vector<Position> squares;
 };
+
+
+class Piece {
+public:
+
+private:
+    friend auto operator<=>(Piece const&, Piece const&) = default;
+};
+
+std::ostream& operator<<(std::ostream& output, Piece const& /*value*/) {
+    return output;
+}
+
+class Game {
+public:
+    std::vector<Piece> get_pieces_on_board() const {
+        return {};
+    }
+
+private:
+    friend auto operator<=>(Game const&, Game const&) = default;
+};
+
+std::ostream& operator<<(std::ostream& output, Game const& /*value*/) {
+    return output;
+}
 
 std::vector<Corner> create_corners(Position const& position) {
     return { {position, CornerId::NW}, {position, CornerId::NE}, {position, CornerId::SE}, {position, CornerId::SW} };
@@ -379,6 +414,25 @@ const boost::ut::suite rules_suite = [] {
 
 using namespace boost::ut;
 using namespace boost::ut::bdd;
+
+
+"BoardState"_test = [] {
+
+    given("Given a new game") = []{
+        Game const game;
+
+        when("When getting the board state") = [&game] {
+            auto const result = game.get_pieces_on_board();
+
+            then("Then there is no pieces on the board") = [&result] {
+                decltype(result) reference = {};
+
+                expect(that % result == reference);
+
+            };
+        };
+    };
+};
 
 "are_equivalent"_test = [] {
 
