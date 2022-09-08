@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lib", "Lib", "{97097D2E-449
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExternalDependencies", "ExternalDependencies", "{CCCE371E-02E8-40C7-8FCB-3C286F458754}"
 	ProjectSection(SolutionItems) = preProject
+		Props\ExternalDependencies\Fmt.props = Props\ExternalDependencies\Fmt.props
 		Props\ExternalDependencies\MagicEnum.props = Props\ExternalDependencies\MagicEnum.props
 		Props\ExternalDependencies\RangeV3.props = Props\ExternalDependencies\RangeV3.props
 		Props\ExternalDependencies\Ut.props = Props\ExternalDependencies\Ut.props

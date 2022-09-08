@@ -6,9 +6,10 @@
 #include <utility>
 #include <vector>
 
+#include "boost/ut.hpp"
 #include "magic_enum.hpp"
 #include "range/v3/all.hpp"
-#include "boost/ut.hpp"
+#include "fmt/format.h"
 
 
 //Blokus Game Board(400 squares)
@@ -73,8 +74,8 @@ public:
         , y(y)
     {}
 
-    int get_x() const { return x; }
-    int get_y() const { return y; }
+    constexpr int get_x() const { return x; }
+    constexpr int get_y() const { return y; }
 
 private:
     int x;
@@ -83,8 +84,43 @@ private:
     friend auto operator<=>(Position const&, Position const&) = default;
 };
 
+namespace fmt {
+
+template <>
+class formatter<Position> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(Position const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{{ x : {}, y : {} }}", value.get_x(), value.get_y());
+    }
+};
+
+}
+
 std::ostream& operator<<(std::ostream& output, Position const& value) {
-    output << "{ x : " << value.get_x() << ", y : " << value.get_y() << " }";
+    output << fmt::format("{}", value);
     return output;
 }
 
@@ -95,8 +131,8 @@ public:
         , y(y)
     {}
 
-    int get_x() const { return x; }
-    int get_y() const { return y; }
+    constexpr int get_x() const { return x; }
+    constexpr int get_y() const { return y; }
 
 private:
     int x;
@@ -114,8 +150,44 @@ constexpr Position operator-(Position const& position, PositionDelta const& delt
 }
 
 enum class CornerId { NW, NE, SE, SW };
+
+namespace fmt {
+
+template <>
+class formatter<CornerId> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(CornerId const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{}", magic_enum::enum_name(value));
+    }
+};
+
+}
+
 std::ostream& operator<<(std::ostream& output, CornerId const& value) {
-    output << magic_enum::enum_name(value);
+    output << fmt::format("{}", value);
     return output;
 }
 
@@ -126,8 +198,8 @@ public:
         , corner_id(cornerId)
     {}
 
-    Position const& get_position() const { return position; }
-    CornerId get_corner_id() const { return corner_id; }
+    constexpr Position const& get_position() const { return position; }
+    constexpr CornerId get_corner_id() const { return corner_id; }
 
 private:
     Position position;
@@ -136,8 +208,43 @@ private:
     friend auto operator<=>(Corner const&, Corner const&) = default;
 };
 
+namespace fmt {
+
+template <>
+class formatter<Corner> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(Corner const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{{ Position : {}, CornerId : {} }}", value.get_position(), value.get_corner_id());
+    }
+};
+
+}
+
 std::ostream& operator<<(std::ostream& output, Corner const& value) {
-    output << "{ Position : " << value.get_position() << ", ConerId : " << value.get_corner_id() << " }";
+    output << fmt::format("{}", value);
     return output;
 }
 
@@ -167,14 +274,85 @@ private:
     friend auto operator<=>(Piece const&, Piece const&) = default;
 };
 
-std::ostream& operator<<(std::ostream& output, Piece const& /*value*/) {
+namespace fmt {
+
+template <>
+class formatter<Piece> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+    //    if (i != end && (*i == 'f' || *i == 'e')) {
+    //        presentation_ = *i++;
+    //    }
+    //    if (i != end && *i != '}') {
+    //        throw format_error("invalid format");
+    //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(Piece const& /*p*/, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{{}}");
+    }
+};
+
+}
+
+std::ostream& operator<<(std::ostream& output, Piece const& value) {
+    output << fmt::format("{}", value);
     return output;
 }
 
 enum class PlayerId { Red, Green, Blue, Yellow };
 
+namespace fmt {
+
+template <>
+class formatter<PlayerId> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(PlayerId const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{}", magic_enum::enum_name(value));
+    }
+};
+
+}
+
 std::ostream& operator<<(std::ostream& output, PlayerId const& value) {
-    output << magic_enum::enum_name(value);
+    output << fmt::format("{}", value);
     return output;
 }
 
@@ -203,20 +381,84 @@ private:
     friend auto operator<=>(Game const&, Game const&) = default;
 };
 
+namespace fmt {
+
+template <class Type, class Alloc>
+class formatter<std::vector<Type, Alloc>> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(std::vector<Type, Alloc> const& values, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "[{}]", fmt::join(values, ","));
+    }
+};
+
+}
+
 template<class Type, class Alloc>
 std::ostream& operator<<(std::ostream& output, std::vector<Type, Alloc> const& values) {
-    // TODO: Replace with fmt
-    output << "[ ";
-    for (auto& value : values) {
-        output << value << ", ";
-    }
-    output << " ]";
-
+    output << fmt::format("{}", values);
     return output;
 }
 
+namespace fmt {
+
+template <>
+class formatter<Game> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(Game const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{{ Pieces on board : {}, Current player : {} }}", value.get_pieces_on_board(), value.get_current_player());
+    }
+};
+
+}
+
 std::ostream& operator<<(std::ostream& output, Game const& value) {
-    output << "{ " << "Pieces on board: " << value.get_pieces_on_board() << ", " << "Current player: " << value.get_current_player() << " }";
+    output << fmt::format("{}", value);
     return output;
 }
 
