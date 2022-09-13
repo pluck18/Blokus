@@ -67,6 +67,133 @@
 // After that it would be to repeat for Player 2, then Player 3, then Player 4, and then go back to Player 1.
 // Let start with the initial state
 
+
+namespace fmt {
+
+template <class F, class S>
+class formatter<std::pair<F, S>> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(std::pair<F, S> const& values, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+
+        return format_to(ctx.out(), "{{ First : {}, Second : {} }}", values.first, values.second);
+    }
+};
+
+}
+
+template <class F, class S>
+std::ostream& operator<<(std::ostream& output, std::pair<F, S> const& values) {
+    output << fmt::format("{}", values);
+    return output;
+}
+
+namespace fmt {
+
+template <class... Args>
+class formatter<std::tuple<Args...>> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(std::tuple<Args...> const& values, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+
+        // TODO: Fix this to print 0 : "0", 1 : "1", ...
+        return format_to(ctx.out(), "{}", std::get<0>(values));
+    }
+};
+
+}
+
+template<class... Args>
+std::ostream& operator<<(std::ostream& output, std::tuple<Args...> const& values) {
+    output << fmt::format("{}", values);
+    return output;
+}
+
+namespace fmt {
+
+template <class Type, class Alloc>
+class formatter<std::vector<Type, Alloc>> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(std::vector<Type, Alloc> const& values, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "[ {} ]", fmt::join(values, ", "));
+    }
+};
+
+}
+
+template<class Type, class Alloc>
+std::ostream& operator<<(std::ostream& output, std::vector<Type, Alloc> const& values) {
+    output << fmt::format("{}", values);
+    return output;
+}
+
 class Position {
 public:
     constexpr Position(int x, int y)
@@ -147,6 +274,46 @@ constexpr Position operator+(Position const& position, PositionDelta const& delt
 
 constexpr Position operator-(Position const& position, PositionDelta const& delta) {
     return { position.get_x() - delta.get_x(), position.get_y() - delta.get_y() };
+}
+
+namespace fmt {
+
+template <>
+class formatter<PositionDelta> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(PositionDelta const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{{ x : {}, y : {} }}", value.get_x(), value.get_y());
+    }
+};
+
+}
+
+std::ostream& operator<<(std::ostream& output, PositionDelta const& value) {
+    output << fmt::format("{}", value);
+    return output;
 }
 
 enum class CornerId { NW, NE, SE, SW };
@@ -250,19 +417,55 @@ std::ostream& operator<<(std::ostream& output, Corner const& value) {
 
 class OrientedPiece {
 public:
-    OrientedPiece(std::vector<Position> squares)
+    constexpr OrientedPiece(std::vector<Position> squares)
         : squares(std::move(squares))
     {}
 
-    std::vector<Position> const& get_squares() const { return squares; }
+    constexpr std::vector<Position> const& get_squares() const { return squares; }
+
 private:
     std::vector<Position> squares;
 
     friend auto operator<=>(OrientedPiece const&, OrientedPiece const&) = default;
 };
 
-std::ostream& operator<<(std::ostream& output, OrientedPiece const& /*value*/) {
-    // TODO: to be completed
+namespace fmt {
+
+template <>
+class formatter<OrientedPiece> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(OrientedPiece const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{{ Squares : {} }}", value.get_squares());
+    }
+};
+
+}
+
+std::ostream& operator<<(std::ostream& output, OrientedPiece const& value) {
+    output << fmt::format("{}", value);
     return output;
 }
 
@@ -358,20 +561,20 @@ std::ostream& operator<<(std::ostream& output, PlayerId const& value) {
 
 class Game {
 public:
-    static Game CreateNew( std::vector<PlayerId> players ) {
+    constexpr static Game CreateNew( std::vector<PlayerId> players ) {
         return { std::move(players) };
     }
 
-    std::vector<Piece> get_pieces_on_board() const {
+    constexpr std::vector<Piece> get_pieces_on_board() const {
         return {};
     }
 
-    PlayerId get_current_player() const {
+    constexpr PlayerId get_current_player() const {
         return players[current_player];
     }
 
 private:
-    Game(std::vector<PlayerId> players) : players(std::move(players)) {
+    constexpr Game(std::vector<PlayerId> players) : players(std::move(players)) {
         assert(!this->players.empty());
     }
 
@@ -380,47 +583,6 @@ private:
 
     friend auto operator<=>(Game const&, Game const&) = default;
 };
-
-namespace fmt {
-
-template <class Type, class Alloc>
-class formatter<std::vector<Type, Alloc>> {
-    // format specification storage
-    //char presentation_ = 'f';
-public:
-    // parse format specification and store it:
-    constexpr auto parse(format_parse_context& ctx) {
-        auto i = ctx.begin()/*, end = ctx.end()*/;
-        //    if (i != end && (*i == 'f' || *i == 'e')) {
-        //        presentation_ = *i++;
-        //    }
-        //    if (i != end && *i != '}') {
-        //        throw format_error("invalid format");
-        //    }
-        return i;
-    }
-
-    // format a value using stored specification:
-    template <typename FmtContext>
-    constexpr auto format(std::vector<Type, Alloc> const& values, FmtContext& ctx) const {
-        //// note: we can't use ternary operator '?:' in a constexpr
-        //switch (presentation_) {
-        //default:
-        //    // 'ctx.out()' is an output iterator
-        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
-        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
-        //}
-        return format_to(ctx.out(), "[{}]", fmt::join(values, ","));
-    }
-};
-
-}
-
-template<class Type, class Alloc>
-std::ostream& operator<<(std::ostream& output, std::vector<Type, Alloc> const& values) {
-    output << fmt::format("{}", values);
-    return output;
-}
 
 namespace fmt {
 
@@ -461,6 +623,8 @@ std::ostream& operator<<(std::ostream& output, Game const& value) {
     output << fmt::format("{}", value);
     return output;
 }
+
+// ----------------------------------------------------------------------------
 
 std::vector<Corner> create_corners(Position const& position) {
     return { {position, CornerId::NW}, {position, CornerId::NE}, {position, CornerId::SE}, {position, CornerId::SW} };
@@ -654,13 +818,13 @@ private:
     using reference_type = std::remove_cvref_t<Reference>;
 
 public:
-    Data(Input input, Reference reference)
+    constexpr Data(Input input, Reference reference)
         : input(std::move(input))
         , reference(std::move(reference))
     {}
 
-    input_type const& get_input() const { return input; }
-    reference_type const& get_reference() const { return reference; }
+    constexpr input_type const& get_input() const { return input; }
+    constexpr reference_type const& get_reference() const { return reference; }
 
 private:
     input_type input;
@@ -694,16 +858,162 @@ struct tuple_element<Index, test::Data<Input, Reference>>
 
 }
 
+namespace fmt {
+
+template<class Input, class Reference>
+class formatter<test::Data<Input, Reference>> {
+    // format specification storage
+    //char presentation_ = 'f';
+public:
+    // parse format specification and store it:
+    constexpr auto parse(format_parse_context& ctx) {
+        auto i = ctx.begin()/*, end = ctx.end()*/;
+        //    if (i != end && (*i == 'f' || *i == 'e')) {
+        //        presentation_ = *i++;
+        //    }
+        //    if (i != end && *i != '}') {
+        //        throw format_error("invalid format");
+        //    }
+        return i;
+    }
+
+    // format a value using stored specification:
+    template <typename FmtContext>
+    constexpr auto format(test::Data<Input, Reference> const& value, FmtContext& ctx) const {
+        //// note: we can't use ternary operator '?:' in a constexpr
+        //switch (presentation_) {
+        //default:
+        //    // 'ctx.out()' is an output iterator
+        //case 'f': return format_to(ctx.out(), "({:f}, {:f})", p.x, p.y);
+        //case 'e': return format_to(ctx.out(), "({:e}, {:e})", p.x, p.y);
+        //}
+        return format_to(ctx.out(), "{{ Input : {}, Refernce : {} }}", value.get_input(), value.get_reference());
+    }
+};
+
+}
+
+template<class Input, class Reference>
+std::ostream& operator<<(std::ostream& output, test::Data<Input, Reference> const& value) {
+    output << fmt::format("{}", value);
+    return output;
+}
+
+// ----------------------------------------------------------------------------
+
+namespace cfg {
+
+struct printer : boost::ut::printer {
+    template <class T>
+    auto& operator<<(T&& t) {
+        //boost::ut::printer::operator<<(fmt::format("{}", std::forward<T>(t)));
+        std::ostringstream stream;
+        stream << t;
+        boost::ut::printer::operator<<(stream.str());
+        return *this;
+    }
+
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::eq_<TLhs, TRhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs, class TEpsilon>
+//    auto& operator<<(const boost::ut::detail::approx_<TLhs, TRhs, TEpsilon>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::neq_<TLhs, TRhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::gt_<TLhs, TRhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::ge_<TLhs, TRhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::lt_<TRhs, TLhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::le_<TRhs, TLhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::and_<TLhs, TRhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TLhs, class TRhs>
+//    auto& operator<<(const boost::ut::detail::or_<TLhs, TRhs>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class T>
+//    auto& operator<<(const boost::ut::detail::not_<T>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class T>
+//    auto& operator<<(const boost::ut::detail::fatal_<T>& fatal) {
+//        return boost::ut::printer::operator<<(fatal);
+//    }
+//
+//#if defined(__cpp_exceptions)
+//    template <class TExpr, class TException>
+//    auto& operator<<(const boost::ut::detail::throws_<TExpr, TException>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TExpr>
+//    auto& operator<<(const boost::ut::detail::throws_<TExpr, void>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//
+//    template <class TExpr>
+//    auto& operator<<(const boost::ut::detail::nothrow_<TExpr>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//#endif
+//
+//#if __has_include(<unistd.h>) and __has_include(<sys/wait.h>)
+//    template <class TExpr>
+//    auto& operator<<(const boost::ut::detail::aborts_<TExpr>& op) {
+//        return boost::ut::printer::operator<<(op);
+//    }
+//#endif
+//
+//    template <class T>
+//    auto& operator<<(const boost::ut::detail::type_<T>& t) {
+//        return boost::ut::printer::operator<<(t);
+//    }
+};
+
+}  // namespace cfg
+
+template <>
+auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<boost::ut::reporter<cfg::printer>>{};
+
+// ----------------------------------------------------------------------------
+
 const boost::ut::suite rules_suite = [] {
 
 using namespace boost::ut;
 using namespace boost::ut::bdd;
 
-
 "BoardState"_test = [] {
 
     given("Given a new game and players") = []{
-        PlayerId first_player = PlayerId::Yellow;
+        auto const first_player = PlayerId::Yellow;
         auto const game = Game::CreateNew({ first_player, PlayerId::Red, PlayerId::Green, PlayerId::Blue });
 
         when("When getting the board state") = [&game] {
@@ -838,4 +1148,35 @@ using namespace boost::ut::bdd;
 
 // ----------------------------------------------------------------------------
 
-int main() {}
+int main() {
+    std::cout << fmt::format("{}\n", PlayerId::Yellow);
+
+    auto const game = Game::CreateNew({ PlayerId::Yellow, PlayerId::Red, PlayerId::Green, PlayerId::Blue });
+    std::cout << fmt::format("{}\n", game);
+
+    std::vector<test::Data<std::pair<Corner, Corner>, bool>> data({
+        { { { {0, 0}, CornerId::NW }, { { 0,  0}, CornerId::NW } }, true },
+        { { { {0, 0}, CornerId::NW }, { { 0,  0}, CornerId::NE } }, false },
+        { { { {0, 0}, CornerId::NW }, { {-1,  0}, CornerId::NE } }, true },
+        { { { {0, 0}, CornerId::NW }, { { 0,  1}, CornerId::SW } }, true },
+        { { { {0, 0}, CornerId::NE }, { { 0,  1}, CornerId::SE } }, true },
+        { { { {0, 0}, CornerId::NE }, { { 1,  0}, CornerId::NW } }, true },
+        { { { {0, 0}, CornerId::SE }, { { 1,  0}, CornerId::SW } }, true },
+        { { { {0, 0}, CornerId::SE }, { { 0, -1}, CornerId::NE } }, true },
+        { { { {0, 0}, CornerId::SW }, { { 0, -1}, CornerId::NW } }, true },
+        { { { {0, 0}, CornerId::SW }, { {-1,  0}, CornerId::SE } }, true },
+        { { { {0, 0}, CornerId::NW }, { { 1,  0}, CornerId::SE } }, false },
+        });
+    std::cout << fmt::format("{}\n", data);
+
+    std::vector< test::Data<std::tuple<OrientedPiece, Corner>, std::vector<Position>>> data2({
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SE } }, { { -1,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::SW } }, { {  0,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NW } }, { {  0,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 0, 0 }, CornerId::NE } }, { { -1,  0 } } },
+        { { { { { 0,0 }, { 1,0 } } }, { { 1, 2 }, CornerId::SE } }, { {  0,  2 } } },
+        { { { { { 1,2 }, { 2,2 } } }, { { 0, 0 }, CornerId::SE } }, { { -2, -2 } } },
+        { { { { { 0,0 }, { 0,1 }, { 1,1 } } }, { { 0, 0 }, CornerId::SE } }, { { 0, 0 }, { -1, -1 } } },
+        });
+    std::cout << fmt::format("{}\n", data2);
+}
