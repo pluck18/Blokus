@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <CommonPropsImported>true</CommonPropsImported>
+    <OutputBaseDir>$(SolutionDir)..\..\Output</OutputBaseDir>
+    <OutputSpecificDir>$(OutputBaseDir)\$(Platform)\$(Configuration)</OutputSpecificDir>
+    <PropsDir>$(SolutionDir)\Props</PropsDir>
+    <LibDir>$(SolutionDir)lib</LibDir>
+    <BinOutDir>$(OutputSpecificDir)\bin</BinOutDir>
+    <LibOutDir>$(OutputSpecificDir)\lib</LibOutDir>
+    <TestOutDir>$(OutputSpecificDir)\test</TestOutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir>$(OutputSpecificDir)\int\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalLibraryDirectories>$(LibOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(LibOutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(LibDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="PropsDir">
+      <Value>$(PropsDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="LibDir">
+      <Value>$(LibDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OutputBaseDir">
+      <Value>$(OutputBaseDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OutputSpecificDir">
+      <Value>$(OutputSpecificDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="BinOutDir">
+      <Value>$(BinOutDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="LibOutDir">
+      <Value>$(LibOutDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="TestOutDir">
+      <Value>$(TestOutDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
