@@ -60,12 +60,12 @@ private:
 
 
 
-template<typename T>
-concept test_print_helper_exists = requires(std::remove_cvref_t<T> const& v) {
-    { test_print_helper(v) } -> std::same_as<TestPrintHelperData>;
-};
+//template<typename T>
+//concept test_print_helper_exists = requires(T const& v) {
+//    { test_print_helper(v) }/* -> std::same_as<TestPrintHelperData>*/;
+//};
 
-
+//requires test_print_helper_exists<T>
 
 struct S {};
 
@@ -73,59 +73,232 @@ TestPrintHelperData test_print_helper(S const& /*value*/) {
     return {};
 }
 
+auto test_print_helper(std::string_view value) {
+    return value;
+}
+
+auto test_print_helper(std::string const& value) {
+    return value;
+}
+
+template<size_t N>
+auto test_print_helper(char const * const value[N]) {
+    return value;
+}
+
+auto test_print_helper(char const * const value) {
+    return value;
+}
+
+// ----------------------------------------------------------------------------
+
+//namespace details {
+//    class ReferenceCounterHelper {
+//    public:
+//        ReferenceCounterHelper(int& counter) :
+//            counter(counter) {
+//            assert(counter >= 0);
+//            ++counter;
+//        }
+//
+//        ~ReferenceCounterHelper() {
+//            assert(counter >= 0);
+//            --counter;
+//        }
+//
+//    private:
+//        int& counter;
+//    };
+//}
+//
+//class ReferenceCounter {
+//public:
+//    ~ReferenceCounter() { assert(counter == 0); }
+//
+//    details::ReferenceCounterHelper add() { return { counter }; }
+//
+//    bool is_zero() const { return counter == 0; }
+//
+//    int counter = 0;
+//};
+
 // ----------------------------------------------------------------------------
 
 namespace cfg {
 
-struct printer : boost::ut::printer {
+namespace details {
     template <class T>
-        //requires test_print_helper_exists<T>
+    [[nodiscard]] constexpr auto get_value_impl(const T& t, int) -> decltype(t.get_value()) {
+        return t.get();
+    }
+    template <class T>
+    [[nodiscard]] constexpr auto get_value_impl(const T& t, ...) -> decltype(auto) {
+        return t;
+    }
+    template <class T>
+    [[nodiscard]] constexpr auto get_value(const T& t) {
+        return get_impl(t, 0);
+    }
+}
+
+struct Printer {
+public:
+    template<class T>
+    struct Value {
+        Value(T const& value) : value(value) {}
+
+        auto get_value() const {
+            auto data = test_print_helper(value);
+            if constexpr (std::is_same_v<decltype(data), TestPrintHelperData>) {
+                return data.str();
+            }
+            else {
+                return data;
+            }
+        }
+
+    private:
+        T const& value;
+    };
+
+    auto str() const { return printer.str(); }
+    const auto& colors() const { return printer.colors(); }
+
+    template <class T>
     auto& operator<<(T const& t) {
-        if constexpr (test_print_helper_exists<T>) {
-            auto const data = test_print_helper(t);
-            auto const str = data.str();
-            boost::ut::printer::operator<<(str);
-        }
-        else {
-            boost::ut::printer::operator<<(t);
-        }
+        printer << boost::ut::detail::get(t);
         return *this;
     }
+
+    //template<>
+    //auto& operator<<(TestPrintHelperData const& t) {
+    //    printer << t.str();
+    //    return *this;
+    //}
+
+    auto& operator<<(std::string_view sv) {
+        printer << sv;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+        //requires test_print_helper_exists<TLhs> and test_print_helper_exists<TRhs>
+    auto& operator<<(boost::ut::detail::eq_<TLhs, TRhs> const& op) {
+        boost::ut::detail::eq_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs, class TEpsilon>
+        //requires test_print_helper_exists<TLhs>and test_print_helper_exists<TRhs> and test_print_helper_exists<TEpsilon>
+    auto& operator<<(boost::ut::detail::approx_<TLhs, TRhs, TEpsilon> const& op) {
+        boost::ut::detail::approx_ value_op(Value(op.lhs()), Value(op.rhs()), Value(op.epsilon()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+    auto& operator<<(boost::ut::detail::neq_<TLhs, TRhs> const& op) {
+        boost::ut::detail::neq_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+    auto& operator<<(boost::ut::detail::gt_<TLhs, TRhs> const& op) {
+        boost::ut::detail::gt_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+    auto& operator<<(boost::ut::detail::ge_<TLhs, TRhs> const& op) {
+        boost::ut::detail::ge_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+    auto& operator<<(boost::ut::detail::lt_<TRhs, TLhs> const& op) {
+        boost::ut::detail::lt_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+    auto& operator<<(boost::ut::detail::le_<TRhs, TLhs> const& op) {
+        boost::ut::detail::le_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+    auto& operator<<(boost::ut::detail::and_<TLhs, TRhs> const& op) {
+        boost::ut::detail::and_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class TLhs, class TRhs>
+    auto& operator<<(boost::ut::detail::or_<TLhs, TRhs> const& op) {
+        boost::ut::detail::or_ value_op(Value(op.lhs()), Value(op.rhs()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class T>
+    auto& operator<<(boost::ut::detail::not_<T> const& op) {
+        boost::ut::detail::not_ value_op(Value(op.value()));
+        printer << value_op;
+        return *this;
+    }
+
+    template <class T>
+    auto& operator<<(boost::ut::detail::fatal_<T>& fatal) {
+        boost::ut::detail::fatal_ value_fatal(Value(fatal.get()));
+        printer << value_fatal;
+        return *this;
+    }
+
+private:
+    boost::ut::printer printer;
 };
 
 }  // namespace cfg
 
 template <>
-auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<boost::ut::reporter<cfg::printer>>{};
+auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<boost::ut::reporter<cfg::Printer>>{};
 
 // ----------------------------------------------------------------------------
 
-const boost::ut::suite rules_suite = [] {
-
-using namespace boost::ut;
-using namespace boost::ut::bdd;
-
-"PrintHelper"_test = [] {
-
-    given("Given an empty structure") = []{
-        S s;
-
-        when("When retrieving printer output") = [&s] {
-            cfg::printer printer;
-            printer << s;
-            auto const result = printer.str();
-
-            then("Then the ouput is equivalent to an empty json") = [&result] {
-                auto const reference = "{}";
-
-                expect(that % result == reference);
-            };
-        };
-    };
-};
-
-};
+//const boost::ut::suite rules_suite = [] {
+//
+//using namespace boost::ut;
+//using namespace boost::ut::bdd;
+//
+//"PrintHelper"_test = [] {
+//
+//    given("Given an empty structure") = []{
+//        S s;
+//
+//        when("When retrieving printer output") = [&s] {
+//            cfg::Printer printer;
+//            printer << cfg::Printer::Value(s);
+//            auto const result = printer.str();
+//
+//            then("Then the ouput is equivalent to an empty json") = [&result] {
+//                auto const reference = "";
+//
+//                expect(that % result == reference);
+//            };
+//        };
+//    };
+//};
+//
+//};
 
 // ----------------------------------------------------------------------------
 
-int main() {}
+int main() {
+    assert(test_print_helper(S()).str() == "{}");
+}
