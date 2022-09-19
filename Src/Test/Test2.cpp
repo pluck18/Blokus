@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <format>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -70,6 +71,7 @@ static void to_json(nlohmann::json& j, TestPrintHelperData const& data) {
     j = data.json();
 }
 
+// ----------------------------------------------------------------------------
 
 struct S {
     friend auto operator<=>(S const&, S const&) = default;
@@ -107,9 +109,13 @@ auto test_print_helper(Sc const& value) {
 
 // ----------------------------------------------------------------------------
 
+template<class T>
+auto test_print_helper(T const& value) {
+    return to_string(value);
+}
+
 auto test_print_helper(std::string const& value) {
-    using namespace std::string_literals;
-    return "\""s + value + "\""s;
+    return std::format("\"{}\"", value);
 }
 
 auto test_print_helper(std::string_view value) {
@@ -246,6 +252,7 @@ private:
     boost::ut::printer printer;
 };
 
+// TODO: Fix this, this is supposed to work
 //template<class TLhs, class TRhs>
 //auto operator<=>(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs) {
 //    return lhs.get_value() <=> rhs.get_value();
