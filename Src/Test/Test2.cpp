@@ -59,18 +59,10 @@ private:
 };
 
 
-
-template<typename T>
-concept test_print_helper_exists = requires(T const& v) {
-    { test_print_helper(v) }/* -> std::same_as<TestPrintHelperData>*/;
-};
-
-//requires test_print_helper_exists<T>
-
 struct S {};
 
-TestPrintHelperData test_print_helper(S const& /*value*/) {
-    return {};
+auto test_print_helper(S const& /*value*/) {
+    return TestPrintHelperData{};
 }
 
 auto test_print_helper(std::string_view value) {
@@ -113,7 +105,6 @@ public:
     }
 
     template <class T>
-        //requires test_print_helper_exists<T>
     auto& operator<<(Value<T> const& t) {
         *this << t.get_value();
         return *this;
@@ -130,7 +121,6 @@ public:
     }
 
     template <class TLhs, class TRhs>
-        //requires test_print_helper_exists<TLhs> and test_print_helper_exists<TRhs>
     auto& operator<<(boost::ut::detail::eq_<TLhs, TRhs> const& op) {
         boost::ut::detail::eq_ value_op(Value(op.lhs()), Value(op.rhs()));
         printer << value_op;
@@ -138,7 +128,6 @@ public:
     }
 
     template <class TLhs, class TRhs, class TEpsilon>
-        //requires test_print_helper_exists<TLhs>and test_print_helper_exists<TRhs> and test_print_helper_exists<TEpsilon>
     auto& operator<<(boost::ut::detail::approx_<TLhs, TRhs, TEpsilon> const& op) {
         boost::ut::detail::approx_ value_op(Value(op.lhs()), Value(op.rhs()), Value(op.epsilon()));
         printer << value_op;
