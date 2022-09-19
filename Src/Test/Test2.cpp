@@ -126,10 +126,10 @@ auto test_print_helper(char const * const value) {
 
 namespace cfg {
 
-namespace details {
+namespace detail {
     template <class T>
     [[nodiscard]] constexpr auto get_value_impl(const T& t, int) -> decltype(t.get_value()) {
-        return t.get();
+        return t.get_value();
     }
     template <class T>
     [[nodiscard]] constexpr auto get_value_impl(const T& t, ...) -> decltype(auto) {
@@ -137,7 +137,7 @@ namespace details {
     }
     template <class T>
     [[nodiscard]] constexpr auto get_value(const T& t) {
-        return get_impl(t, 0);
+        return get_value_impl(t, 0);
     }
 }
 
@@ -167,6 +167,12 @@ public:
     template <class T>
     auto& operator<<(T const& t) {
         printer << boost::ut::detail::get(t);
+        return *this;
+    }
+
+    template <class T>
+    auto& operator<<(Value<T> const& t) {
+        printer << detail::get_value(t);
         return *this;
     }
 
@@ -301,4 +307,5 @@ auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<boost::ut::reporter
 
 int main() {
     assert(test_print_helper(S()).str() == "{}");
+    assert((cfg::Printer() << cfg::Printer::Value(S())).str() == "{}");
 }
