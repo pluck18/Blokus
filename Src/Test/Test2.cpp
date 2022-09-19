@@ -56,25 +56,30 @@ public:
 
 private:
     nlohmann::json data;
+
+    friend auto operator<=>(TestPrintHelperData const&, TestPrintHelperData const&) = default;
 };
 
 
-struct S {};
+struct S {
+    friend auto operator<=>(S const&, S const&) = default;
+};
 
 auto test_print_helper(S const& /*value*/) {
     return TestPrintHelperData{};
 }
 
-auto test_print_helper(std::string_view value) {
-    return value;
+auto test_print_helper(std::string const& value) {
+    using namespace std::string_literals;
+    return "\""s + value + "\""s;
 }
 
-auto test_print_helper(std::string const& value) {
-    return value;
+auto test_print_helper(std::string_view value) {
+    return test_print_helper(std::string(std::move(value)));
 }
 
 auto test_print_helper(char const * const value) {
-    return value;
+    return test_print_helper(std::string(value));
 }
 
 // ----------------------------------------------------------------------------
@@ -85,14 +90,16 @@ struct Printer {
 public:
     template<class T>
     struct Value {
-        Value(T const& value) : value(value) {}
+        Value(T const& value) :
+            value(value) {
+        }
 
         auto get_value() const {
             return test_print_helper(value);
         }
 
     private:
-        T const& value;
+        T value;
     };
 
     auto str() const { return printer.str(); }
@@ -201,6 +208,22 @@ private:
     boost::ut::printer printer;
 };
 
+//template<class TLhs, class TRhs>
+//auto operator<=>(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs) {
+//    return lhs.get_value() <=> rhs.get_value();
+//}
+
+template<class TLhs, class TRhs>
+auto operator==(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs) {
+    return lhs.get_value() == rhs.get_value();
+}
+
+template<class T>
+auto& operator<<(std::ostream& stream, Printer::Value<T> const& value) {
+    stream << value.get_value();
+    return stream;
+}
+
 }  // namespace cfg
 
 template <>
@@ -208,35 +231,36 @@ auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<boost::ut::reporter
 
 // ----------------------------------------------------------------------------
 
-//const boost::ut::suite rules_suite = [] {
-//
-//using namespace boost::ut;
-//using namespace boost::ut::bdd;
-//
-//"PrintHelper"_test = [] {
-//
-//    given("Given an empty structure") = []{
-//        S s;
-//
-//        when("When retrieving printer output") = [&s] {
-//            cfg::Printer printer;
-//            printer << cfg::Printer::Value(s);
-//            auto const result = printer.str();
-//
-//            then("Then the ouput is equivalent to an empty json") = [&result] {
-//                auto const reference = "";
-//
-//                expect(that % result == reference);
-//            };
-//        };
-//    };
-//};
-//
-//};
+const boost::ut::suite rules_suite = [] {
+
+using namespace boost::ut;
+using namespace boost::ut::bdd;
+
+"PrintHelper"_test = [] {
+
+    given("Given an empty structure") = []{
+        S s;
+
+        when("When retrieving printer output") = [&s] {
+            cfg::Printer printer;
+            printer << cfg::Printer::Value(s);
+            auto const result = printer.str();
+
+            then("Then the ouput is equivalent to an empty json") = [&result] {
+                auto const reference = "";
+
+                expect(that % result == reference);
+            };
+        };
+    };
+};
+
+};
 
 // ----------------------------------------------------------------------------
 
 int main() {
     assert(test_print_helper(S()).str() == "{}");
     assert((cfg::Printer() << cfg::Printer::Value(S())).str() == "{}");
+    assert(cfg::Printer::Value(S()) == cfg::Printer::Value(S()));
 }
