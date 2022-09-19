@@ -69,6 +69,19 @@ auto test_print_helper(S const& /*value*/) {
     return TestPrintHelperData{};
 }
 
+struct Si {
+    int i;
+
+    friend auto operator<=>(Si const&, Si const&) = default;
+};
+
+auto test_print_helper(Si const& value) {
+    using namespace std::string_literals;
+    return TestPrintHelperData{ { { "integer"s, value.i } } };
+}
+
+// ----------------------------------------------------------------------------
+
 auto test_print_helper(std::string const& value) {
     using namespace std::string_literals;
     return "\""s + value + "\""s;
@@ -218,6 +231,11 @@ auto operator==(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs
     return lhs.get_value() == rhs.get_value();
 }
 
+template<class TLhs, class TRhs>
+auto operator<(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs) {
+    return lhs.get_value() < rhs.get_value();
+}
+
 template<class T>
 auto& operator<<(std::ostream& stream, Printer::Value<T> const& value) {
     stream << value.get_value();
@@ -248,6 +266,25 @@ using namespace boost::ut::bdd;
 
             then("Then the ouput is equivalent to an empty json") = [&result] {
                 auto const reference = "{}";
+
+                expect(that % result == reference);
+            };
+        };
+    };
+
+    given("Given a structure with an integer variable") = [] {
+        Si s{ 1 };
+
+        when("When retrieving printer output") = [&s] {
+            cfg::Printer printer;
+            printer << cfg::Printer::Value(s);
+            auto const result = printer.str();
+
+            then("Then the ouput is equivalent to an empty json") = [&result] {
+                auto const reference = 
+R"({
+  "integer": 1
+})";
 
                 expect(that % result == reference);
             };
