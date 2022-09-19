@@ -60,10 +60,10 @@ private:
 
 
 
-//template<typename T>
-//concept test_print_helper_exists = requires(T const& v) {
-//    { test_print_helper(v) }/* -> std::same_as<TestPrintHelperData>*/;
-//};
+template<typename T>
+concept test_print_helper_exists = requires(T const& v) {
+    { test_print_helper(v) }/* -> std::same_as<TestPrintHelperData>*/;
+};
 
 //requires test_print_helper_exists<T>
 
@@ -87,54 +87,7 @@ auto test_print_helper(char const * const value) {
 
 // ----------------------------------------------------------------------------
 
-//namespace details {
-//    class ReferenceCounterHelper {
-//    public:
-//        ReferenceCounterHelper(int& counter) :
-//            counter(counter) {
-//            assert(counter >= 0);
-//            ++counter;
-//        }
-//
-//        ~ReferenceCounterHelper() {
-//            assert(counter >= 0);
-//            --counter;
-//        }
-//
-//    private:
-//        int& counter;
-//    };
-//}
-//
-//class ReferenceCounter {
-//public:
-//    ~ReferenceCounter() { assert(counter == 0); }
-//
-//    details::ReferenceCounterHelper add() { return { counter }; }
-//
-//    bool is_zero() const { return counter == 0; }
-//
-//    int counter = 0;
-//};
-
-// ----------------------------------------------------------------------------
-
 namespace cfg {
-
-namespace detail {
-    template <class T>
-    [[nodiscard]] constexpr auto get_value_impl(const T& t, int) -> decltype(t.get_value()) {
-        return t.get_value();
-    }
-    template <class T>
-    [[nodiscard]] constexpr auto get_value_impl(const T& t, ...) -> decltype(auto) {
-        return t;
-    }
-    template <class T>
-    [[nodiscard]] constexpr auto get_value(const T& t) {
-        return get_value_impl(t, 0);
-    }
-}
 
 struct Printer {
 public:
@@ -160,8 +113,9 @@ public:
     }
 
     template <class T>
+        //requires test_print_helper_exists<T>
     auto& operator<<(Value<T> const& t) {
-        *this << detail::get_value(t);
+        *this << t.get_value();
         return *this;
     }
 
