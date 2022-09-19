@@ -81,11 +81,6 @@ auto test_print_helper(std::string const& value) {
     return value;
 }
 
-template<size_t N>
-auto test_print_helper(char const * const value[N]) {
-    return value;
-}
-
 auto test_print_helper(char const * const value) {
     return value;
 }
@@ -148,13 +143,7 @@ public:
         Value(T const& value) : value(value) {}
 
         auto get_value() const {
-            auto data = test_print_helper(value);
-            if constexpr (std::is_same_v<decltype(data), TestPrintHelperData>) {
-                return data.str();
-            }
-            else {
-                return data;
-            }
+            return test_print_helper(value);
         }
 
     private:
@@ -172,15 +161,14 @@ public:
 
     template <class T>
     auto& operator<<(Value<T> const& t) {
-        printer << detail::get_value(t);
+        *this << detail::get_value(t);
         return *this;
     }
 
-    //template<>
-    //auto& operator<<(TestPrintHelperData const& t) {
-    //    printer << t.str();
-    //    return *this;
-    //}
+    auto& operator<<(TestPrintHelperData const& t) {
+        *this << t.str();
+        return *this;
+    }
 
     auto& operator<<(std::string_view sv) {
         printer << sv;
