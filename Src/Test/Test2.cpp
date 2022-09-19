@@ -54,6 +54,10 @@ public:
         }
     }
 
+    auto& json() const {
+        return data;
+    }
+
 private:
     nlohmann::json data;
 
@@ -90,7 +94,7 @@ struct Sc {
 auto test_print_helper(Sc const& value) {
     using namespace std::string_literals;
     return TestPrintHelperData{ {
-        { "i"s, test_print_helper(value.i).str() },
+        { "i"s, test_print_helper(value.i).json() },
         { "d"s, value.d },
         } };
 }
@@ -316,9 +320,11 @@ R"({
 
             then("Then the ouput is equivalent to an empty json") = [&result] {
                 auto const reference =
-                    R"({
+R"({
   "d": 2.0,
-  "i": "{\n  \"integer\": 1\n}"
+  "i": {
+    "integer": 1
+  }
 })";
 
                 expect(that % result == reference);
