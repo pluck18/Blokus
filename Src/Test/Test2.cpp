@@ -109,7 +109,12 @@ auto test_print_helper(Sc const& value) {
 
 // ----------------------------------------------------------------------------
 
+template<typename T> concept to_string_exists = requires (T t) {
+    std::to_string(t);
+};
+
 template<class T>
+    requires to_string_exists<T>
 auto test_print_helper(T const& value) {
     return to_string(value);
 }
