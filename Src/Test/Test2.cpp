@@ -247,7 +247,7 @@ using namespace boost::ut::bdd;
             auto const result = printer.str();
 
             then("Then the ouput is equivalent to an empty json") = [&result] {
-                auto const reference = "";
+                auto const reference = "{}";
 
                 expect(that % result == reference);
             };
@@ -259,8 +259,4 @@ using namespace boost::ut::bdd;
 
 // ----------------------------------------------------------------------------
 
-int main() {
-    assert(test_print_helper(S()).str() == "{}");
-    assert((cfg::Printer() << cfg::Printer::Value(S())).str() == "{}");
-    assert(cfg::Printer::Value(S()) == cfg::Printer::Value(S()));
-}
+int main() {}
