@@ -80,6 +80,21 @@ auto test_print_helper(Si const& value) {
     return TestPrintHelperData{ { { "integer"s, value.i } } };
 }
 
+struct Sc {
+    Si i;
+    double d;
+
+    friend auto operator<=>(Sc const&, Sc const&) = default;
+};
+
+auto test_print_helper(Sc const& value) {
+    using namespace std::string_literals;
+    return TestPrintHelperData{ {
+        { "i"s, test_print_helper(value.i).str() },
+        { "d"s, value.d },
+        } };
+}
+
 // ----------------------------------------------------------------------------
 
 auto test_print_helper(std::string const& value) {
@@ -284,6 +299,26 @@ using namespace boost::ut::bdd;
                 auto const reference = 
 R"({
   "integer": 1
+})";
+
+                expect(that % result == reference);
+            };
+        };
+    };
+
+    given("Given a structure with a complexe variable") = [] {
+        Sc s{ Si(1), 2.0 };
+
+        when("When retrieving printer output") = [&s] {
+            cfg::Printer printer;
+            printer << cfg::Printer::Value(s);
+            auto const result = printer.str();
+
+            then("Then the ouput is equivalent to an empty json") = [&result] {
+                auto const reference =
+                    R"({
+  "d": 2.0,
+  "i": "{\n  \"integer\": 1\n}"
 })";
 
                 expect(that % result == reference);
