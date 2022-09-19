@@ -54,15 +54,21 @@ public:
         }
     }
 
+private:
+    nlohmann::json data;
+
     auto& json() const {
         return data;
     }
 
-private:
-    nlohmann::json data;
+    friend static void to_json(nlohmann::json& j, TestPrintHelperData const& data);
 
     friend auto operator<=>(TestPrintHelperData const&, TestPrintHelperData const&) = default;
 };
+
+static void to_json(nlohmann::json& j, TestPrintHelperData const& data) {
+    j = data.json();
+}
 
 
 struct S {
@@ -94,7 +100,7 @@ struct Sc {
 auto test_print_helper(Sc const& value) {
     using namespace std::string_literals;
     return TestPrintHelperData{ {
-        { "i"s, test_print_helper(value.i).json() },
+        { "i"s, test_print_helper(value.i) },
         { "d"s, value.d },
         } };
 }
