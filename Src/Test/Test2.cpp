@@ -116,7 +116,7 @@ template<typename T> concept to_string_exists = requires (T t) {
 template<class T>
     requires to_string_exists<T>
 auto test_print_helper(T const& value) {
-    return to_string(value);
+    return std::to_string(value);
 }
 
 auto test_print_helper(std::string const& value) {
@@ -135,21 +135,51 @@ auto test_print_helper(char const * const value) {
 
 namespace cfg {
 
+
+template<class T>
+struct Value {
+    Value(T const& value) :
+        value(value) {
+    }
+
+    auto get_value() const {
+        return test_print_helper(value);
+    }
+
+private:
+    T value;
+
+    friend auto operator<=>(Value<T> const& lhs, Value<T> const& rhs) = default;
+};
+
+template<class TLhs, class TRhs>
+auto operator<=>(Value<TLhs> const& lhs, Value<TRhs> const& rhs) {
+    return lhs.get_value() <=> rhs.get_value();
+}
+
+template<class TLhs, class TRhs>
+auto operator<=>(Value<TLhs> const& lhs, TRhs const& rhs) {
+    return lhs.get_value() <=> rhs;
+}
+
+template<class TLhs, class TRhs>
+auto operator<=>(TLhs const& lhs, Value<TRhs> const& rhs) {
+    return lhs <=> rhs.get_value();
+}
+
+template<class TLhs, class TRhs>
+auto operator==(Value<TLhs> const& lhs, Value<TRhs> const& rhs) {
+    return lhs.get_value() == rhs.get_value();
+}
+
+template<class T>
+auto& operator<<(std::ostream& stream, Value<T> const& value) {
+    stream << value.get_value();
+    return stream;
+}
+
 struct Printer {
 public:
-    template<class T>
-    struct Value {
-        Value(T const& value) :
-            value(value) {
-        }
-
-        auto get_value() const {
-            return test_print_helper(value);
-        }
-
-    private:
-        T value;
-    };
 
     auto str() const { return printer.str(); }
     const auto& colors() const { return printer.colors(); }
@@ -257,28 +287,6 @@ private:
     boost::ut::printer printer;
 };
 
-// TODO: Fix this, this is supposed to work
-//template<class TLhs, class TRhs>
-//auto operator<=>(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs) {
-//    return lhs.get_value() <=> rhs.get_value();
-//}
-
-template<class TLhs, class TRhs>
-auto operator==(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs) {
-    return lhs.get_value() == rhs.get_value();
-}
-
-template<class TLhs, class TRhs>
-auto operator<(Printer::Value<TLhs> const& lhs, Printer::Value<TRhs> const& rhs) {
-    return lhs.get_value() < rhs.get_value();
-}
-
-template<class T>
-auto& operator<<(std::ostream& stream, Printer::Value<T> const& value) {
-    stream << value.get_value();
-    return stream;
-}
-
 }  // namespace cfg
 
 template <>
@@ -298,7 +306,7 @@ using namespace boost::ut::bdd;
 
         when("When retrieving printer output") = [&s] {
             cfg::Printer printer;
-            printer << cfg::Printer::Value(s);
+            printer << cfg::Value(s);
             auto const result = printer.str();
 
             then("Then the ouput is equivalent to an empty json") = [&result] {
@@ -314,10 +322,10 @@ using namespace boost::ut::bdd;
 
         when("When retrieving printer output") = [&s] {
             cfg::Printer printer;
-            printer << cfg::Printer::Value(s);
+            printer << cfg::Value(s);
             auto const result = printer.str();
 
-            then("Then the ouput is equivalent to an empty json") = [&result] {
+            then("Then the ouput is equivalent the integer type value") = [&result] {
                 auto const reference = 
 R"({
   "integer": 1
@@ -328,15 +336,15 @@ R"({
         };
     };
 
-    given("Given a structure with a complexe variable") = [] {
+    given("Given a structure with a complex variable") = [] {
         Sc s{ Si(1), 2.0 };
 
         when("When retrieving printer output") = [&s] {
             cfg::Printer printer;
-            printer << cfg::Printer::Value(s);
+            printer << cfg::Value(s);
             auto const result = printer.str();
 
-            then("Then the ouput is equivalent to an empty json") = [&result] {
+            then("Then the ouput is a sub-object for the complex variable") = [&result] {
                 auto const reference =
 R"({
   "d": 2.0,
