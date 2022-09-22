@@ -7,6 +7,19 @@
   <PropertyGroup>
     <OutDir>$(BinOutDir)\</OutDir>
   </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <PreBuildEvent>
+      <Command Condition="Exists('$(TestOutDir)\$(TargetFileName)')">
+        del "$(TestOutDir)\$(TargetFileName)"
+      %(Command)</Command>
+      <Command>mklink "$(TestOutDir)\$(TargetFileName)" "$(TargetPath)"
+      %(Command)</Command>
+      <Message>Create symbolic link to test folder</Message>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="BinOutDir">
       <Value>$(BinOutDir)</Value>
