@@ -2,9 +2,13 @@
 
 #include <any>
 #include <type_traits>
+#include <variant>
 
 #include "gsl/gsl"
 #include "boost/ut.hpp"
+
+#define JSON_DISABLE_ENUM_SERIALIZATION false
+#include "nlohmann/json.hpp"
 
 #include "Api.h"
 
@@ -12,44 +16,15 @@
 
 namespace unit_testing {
 
-template<class... Args>
-auto erase_type(std::pair<std::string, Args>... list) {
-    auto data = std::make_unique<std::vector<std::pair<std::string, std::any>>>();
-    ((data->emplace_back(std::move(list))), ...);
-
-    return data.release();
-}
-
-class UNITTESTING_API TestPrintHelperData {
-public:
-    template<class... Args>
-    TestPrintHelperData(std::pair<std::string, Args>... list) :
-        data(erase_type(std::move(list)...)) {}
-
-private:
-    std::vector<std::pair<std::string, std::any>>* data;
-
-    friend std::vector<std::pair<std::string, std::any>> const& get_data(TestPrintHelperData const&);
-
-    friend auto operator<=>(TestPrintHelperData const&, TestPrintHelperData const&) = default;
-};
-
 // ----------------------------------------------------------------------------
 
-UNITTESTING_API std::string to_string(TestPrintHelperData const& data);
-UNITTESTING_API std::ostream& operator<<(std::ostream& stream, TestPrintHelperData const& data);
+using TestPrintHelperData = nlohmann::json;
 
-// ----------------------------------------------------------------------------
-
-template<typename T> concept to_string_exists = requires (T t) {
-    std::to_string(t);
-};
+//UNITTESTING_API std::string to_string(TestPrintHelperData const& data);
+//UNITTESTING_API std::ostream& operator<<(std::ostream& stream, TestPrintHelperData const& data);
 
 template<class T>
-    requires to_string_exists<T>
-std::string test_print_helper(T const& value) {
-    return std::to_string(value);
-}
+TestPrintHelperData test_print_helper(T const& t);
 
 UNITTESTING_API std::string test_print_helper(std::string const& value);
 UNITTESTING_API std::string test_print_helper(std::string_view value);
@@ -99,7 +74,23 @@ auto operator==(Value<TLhs> const& lhs, Value<TRhs> const& rhs) {
 
 template<class T>
 std::ostream& operator<<(std::ostream& stream, Value<T> const& value) {
-    stream << test_print_helper(value.get_value());
+    auto result = test_print_helper(value.get_value());
+
+    std::string output;
+    if constexpr (std::is_same_v<decltype(result), TestPrintHelperData>) {
+        if (result.empty()) {
+            using namespace std::string_literals;
+            output = "{}"s;
+        }
+        else {
+            output = result.dump(2);
+        }
+    }
+    else {
+        output = result;
+    }
+
+    stream << output;
     return stream;
 }
 
@@ -115,17 +106,6 @@ public:
         printer << boost::ut::detail::get(t);
         return *this;
     }
-
-    //template <class T>
-    //auto& operator<<(Value<T> const& t) {
-    //    *this << test_print_helper(t.get_value());
-    //    return *this;
-    //}
-
-    //auto& operator<<(TestPrintHelperData const& t) {
-    //    *this << to_string(t);
-    //    return *this;
-    //}
 
     auto& operator<<(std::string_view sv) {
         printer << sv;

@@ -21,7 +21,7 @@ struct Si {
 
 unit_testing::TestPrintHelperData test_print_helper(Si const& value) {
     using namespace std::string_literals;
-    return { std::pair{ "integer"s, value.i } };
+    return { { "integer"s, value.i } };
 }
 
 // ----------------------------------------------------------------------------
@@ -36,8 +36,8 @@ struct Sc {
 unit_testing::TestPrintHelperData test_print_helper(Sc const& value) {
     using namespace std::string_literals;
     return {
-        std::pair{ "i"s, test_print_helper(value.i) },
-        std::pair{ "d"s, value.d },
+            { "i"s, test_print_helper(value.i) },
+            { "d"s, value.d },
         };
 }
 

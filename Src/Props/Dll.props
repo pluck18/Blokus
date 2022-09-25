@@ -12,14 +12,14 @@
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(LibOutDir)\$(TargetName).lib</ImportLibrary>
     </Link>
-    <PreBuildEvent>
+    <PostBuildEvent>
       <Command Condition="Exists('$(TestOutDir)\$(TargetFileName)')">
         del "$(TestOutDir)\$(TargetFileName)"
       %(Command)</Command>
       <Command>mklink "$(TestOutDir)\$(TargetFileName)" "$(TargetPath)"
       %(Command)</Command>
       <Message>Create symbolic link to test folder</Message>
-    </PreBuildEvent>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="BinOutDir">
