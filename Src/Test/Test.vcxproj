@@ -42,8 +42,6 @@
     <Import Project="..\Props\ExternalDependencies\MagicEnum.props" />
     <Import Project="..\Props\ExternalDependencies\RangeV3.props" />
     <Import Project="..\Props\ExternalDependencies\Fmt.props" />
-    <Import Project="..\Props\ExternalDependencies\Gsl.props" />
-    <Import Project="..\Props\ExternalDependencies\Json.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -51,8 +49,6 @@
     <Import Project="..\Props\ExternalDependencies\MagicEnum.props" />
     <Import Project="..\Props\ExternalDependencies\RangeV3.props" />
     <Import Project="..\Props\ExternalDependencies\Fmt.props" />
-    <Import Project="..\Props\ExternalDependencies\Gsl.props" />
-    <Import Project="..\Props\ExternalDependencies\Json.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

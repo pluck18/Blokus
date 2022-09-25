@@ -60,4 +60,9 @@
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="ExternalDependencies.props" Condition=" '$(ExternalDependenciesPropsImported)' == '' " />
+    <Import Project="$(ExternalDependenciesPropsDir)\Gsl.props" Condition=" '$(GslPropsImported)' == '' " />
+    <Import Project="$(ExternalDependenciesPropsDir)\Json.props" Condition=" '$(JsonPropsImported)' == '' " />
+  </ImportGroup>
 </Project>

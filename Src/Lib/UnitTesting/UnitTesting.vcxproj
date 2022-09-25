@@ -39,20 +39,12 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\Props\Dll.props" />
-    <Import Project="..\..\Props\ExternalDependencies\RangeV3.props" />
-    <Import Project="..\..\Props\ExternalDependencies\Fmt.props" />
-    <Import Project="..\..\Props\ExternalDependencies\Gsl.props" />
-    <Import Project="..\..\Props\ExternalDependencies\MagicEnum.props" />
-    <Import Project="..\..\Props\ExternalDependencies\Json.props" />
+    <Import Project="..\..\Props\ExternalDependencies\Ut.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\..\Props\Dll.props" />
-    <Import Project="..\..\Props\ExternalDependencies\RangeV3.props" />
-    <Import Project="..\..\Props\ExternalDependencies\Fmt.props" />
-    <Import Project="..\..\Props\ExternalDependencies\Gsl.props" />
-    <Import Project="..\..\Props\ExternalDependencies\MagicEnum.props" />
-    <Import Project="..\..\Props\ExternalDependencies\Json.props" />
+    <Import Project="..\..\Props\ExternalDependencies\Ut.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -87,6 +79,7 @@
     <ClInclude Include="Api.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="UnitTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -94,6 +87,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UnitTest.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

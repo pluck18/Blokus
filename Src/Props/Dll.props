@@ -9,7 +9,8 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(LibOutDir)\$(TargetName).lib</ImportLibrary>
     </Link>
     <PreBuildEvent>
       <Command Condition="Exists('$(TestOutDir)\$(TargetFileName)')">
