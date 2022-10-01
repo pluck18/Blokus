@@ -197,3 +197,5 @@ private:
 
 template <>
 auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<boost::ut::reporter<unit_testing::Printer>>{};
+
+UNITTESTING_API int main();

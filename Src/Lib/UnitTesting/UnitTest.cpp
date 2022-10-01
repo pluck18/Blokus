@@ -33,3 +33,5 @@ std::string test_print_helper(char const* const value) {
 }
 
 }
+
+int main() {}

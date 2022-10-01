@@ -43,9 +43,6 @@ unit_testing::TestPrintHelperData test_print_helper(Sc const& value) {
 
 // ----------------------------------------------------------------------------
 
-//template <>
-//auto boost::ut::cfg<boost::ut::override> = boost::ut::runner<boost::ut::reporter<unit_testing::Printer>>{};
-
 const boost::ut::suite rules_suite = [] {
 
     using namespace boost::ut;
